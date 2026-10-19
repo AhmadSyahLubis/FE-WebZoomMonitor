@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 170" width="280" height="170"><title>state calendar</title>
+      <rect x="47" y="25" width="175" height="132" rx="16" fill="white" stroke="#DCE3EC" stroke-width="2"/>
+      <path d="M47 63h175" stroke="#2B4C86" stroke-width="4"/>
+      <path d="M84 18v20M184 18v20" stroke="#182640" stroke-width="7" stroke-linecap="round"/>
+      <rect x="70" y="79" width="27" height="22" rx="5" fill="#E8EEFA"/>
+      <rect x="109" y="79" width="27" height="22" rx="5" fill="#E8EEFA"/>
+      <rect x="148" y="79" width="27" height="22" rx="5" fill="#E8EEFA"/>
+      <rect x="70" y="113" width="27" height="22" rx="5" fill="#E8EEFA"/>
+      <rect x="109" y="113" width="27" height="22" rx="5" fill="#E8EEFA"/>
+      <circle cx="197" cy="119" r="27" fill="#2B4C86"/>
+      <circle cx="197" cy="119" r="13" fill="none" stroke="white" stroke-width="4"/>
+      <circle cx="197" cy="119" r="3.5" fill="white"/>
+    </svg>

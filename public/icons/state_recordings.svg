@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 170" width="280" height="170"><title>state recordings</title>
+      <rect x="26" y="32" width="228" height="120" rx="16" fill="white" stroke="#DCE3EC" stroke-width="2"/>
+      <rect x="43" y="48" width="194" height="76" rx="11" fill="#E8EEFA"/>
+      <path d="M69 107V83M80 111V79M91 102V88M183 102V88M194 111V79M205 107V83" stroke="#94B4FA" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="137" cy="86" r="30" fill="#2B4C86"/>
+      <path d="m130 73 19 13-19 13Z" fill="white"/>
+      <path d="M56 139h125" stroke="#DCE3EC" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="199" cy="139" r="5" fill="#2B4C86"/>
+    </svg>

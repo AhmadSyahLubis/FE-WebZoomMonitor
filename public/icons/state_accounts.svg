@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 170" width="280" height="170"><title>state accounts</title>
+      <rect x="34" y="43" width="148" height="99" rx="13" fill="#E8EEFA" stroke="#DCE3EC" stroke-width="2"/>
+      <rect x="77" y="25" width="166" height="119" rx="15" fill="white" stroke="#2B4C86" stroke-width="3"/>
+      <path d="M77 55h166" stroke="#DCE3EC" stroke-width="2"/>
+      <circle cx="100" cy="40" r="4" fill="#94B4FA"/>
+      <circle cx="113" cy="40" r="4" fill="#E8EEFA"/>
+      <circle cx="119" cy="95" r="23" fill="#E8EEFA"/>
+      <circle cx="119" cy="88" r="7" fill="none" stroke="#2B4C86" stroke-width="4"/>
+      <path d="M105 108c2.5-7 7.2-10.5 14-10.5s11.5 3.5 14 10.5" fill="none" stroke="#2B4C86" stroke-width="4" stroke-linecap="round"/>
+      <path d="M159 81h52M159 96h40M159 111h30" stroke="#DCE3EC" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="216" cy="124" r="15" fill="#2B4C86"/>
+      <circle cx="216" cy="124" r="6" fill="none" stroke="white" stroke-width="2.7"/>
+    </svg>

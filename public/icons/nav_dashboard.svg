@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" color="#182640" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><title>nav dashboard</title>
+      <rect x="3.2" y="3.2" width="7.1" height="7.1" rx="1.6"/>
+      <rect x="13.7" y="3.2" width="7.1" height="7.1" rx="1.6"/>
+      <rect x="3.2" y="13.7" width="7.1" height="7.1" rx="1.6"/>
+      <circle cx="17.25" cy="17.25" r="3.55"/>
+      <circle cx="17.25" cy="17.25" r="0.8" fill="currentColor" stroke="none"/>
+    </svg>
