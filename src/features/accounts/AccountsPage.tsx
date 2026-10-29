@@ -206,7 +206,7 @@ export const AccountsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <PageBanner title="Akun Zoom perusahaan" description="Kelola akun Zoom dan periksa koneksinya sebelum meeting dimulai." image="accounts_workstation.webp" />
+      <PageBanner title="Akun Zoom instansi" description="Kelola akun Zoom dan periksa koneksinya sebelum meeting dimulai." image="accounts_workstation.webp" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-base font-semibold">Daftar akun <span className="text-slate-500 font-normal">({accounts.length})</span></h2>
         <Button onClick={handleOpenCreate} className="bg-blue-600 hover:bg-blue-700 shadow-xs">
@@ -342,7 +342,7 @@ export const AccountsPage: React.FC = () => {
             <DialogDescription>
               {editingAccount
                 ? 'Perbarui informasi atau kredensial akun Zoom S2S OAuth.'
-                : 'Masukkan kredensial Server-to-Server OAuth dari akun Zoom perusahaan.'}
+                : 'Masukkan kredensial Server-to-Server OAuth dari akun Zoom instansi.'}
             </DialogDescription>
           </DialogHeader>
 

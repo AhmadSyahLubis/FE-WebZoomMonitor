@@ -11,9 +11,11 @@ test('logout/login removes previous profile and ignores late data from the previ
     setItem: (key, value) => values.set(key, String(value)),
     removeItem: key => values.delete(key),
   } });
-  const server = await createServer({ configFile: false, resolve: { alias: { '@': resolve('src') } }, server: { middlewareMode: true, hmr: false, watch: null }, appType: 'custom' });
+  const server = await createServer({ configFile: false, resolve: { alias: { '@': resolve('src') } }, server: { middlewareMode: true, hmr: false, ws: false, watch: null }, appType: 'custom' });
   try {
     const { queryClient, queryKeys } = await server.ssrLoadModule('/src/lib/queryClient.ts');
+    // A canceled request can settle after removal; server tests need no browser GC timer.
+    queryClient.setDefaultOptions({ queries: { ...queryClient.getDefaultOptions().queries, gcTime: Infinity } });
     const { useAuthStore } = await server.ssrLoadModule('/src/features/auth/useAuthStore.ts');
     queryClient.setQueryData(queryKeys.me, { id: 1, name: 'Previous user' });
     let finishOldRequest;

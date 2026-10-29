@@ -1,8 +1,8 @@
-<img src="public/brand/zoom-monitor.svg" alt="Zoom Monitor" width="72" height="72" />
+<img src="public/brand/sumatera-utara.png" alt="Lambang Pemerintah Provinsi Sumatera Utara" width="72" height="90" />
 
-# Zoom Monitor Web
+# Sistem Informasi Pengelolaan Virtual Meeting — Diskominfo Provinsi Sumatera Utara
 
-Frontend web untuk memantau akun Zoom perusahaan, mencari ketersediaan ruang meeting, membuat booking, mengelola jadwal, dan mengakses rekaman. Identitas visual mengikuti aplikasi Flutter Zoom Monitor, termasuk logo, warna navy, font Inter, serta keluarga ikon yang sama.
+Frontend web Dinas Komunikasi dan Informatika Provinsi Sumatera Utara untuk memantau akun Zoom instansi, mencari ketersediaan akun, memesan rapat daring, mengelola jadwal, dan mengakses rekaman. Identitas menggunakan lambang resmi Pemerintah Provinsi Sumatera Utara dengan warna antarmuka biru yang dipertahankan dari desain sebelumnya.
 
 ## Fitur
 
@@ -21,12 +21,12 @@ Frontend web untuk memantau akun Zoom perusahaan, mencari ketersediaan ruang mee
 
 React 19, TypeScript, Vite 8, Tailwind CSS 4, React Router, TanStack Query, Zustand, Axios, React Hook Form, Zod, dan Radix UI. Tanggal dan waktu operasional menggunakan zona `Asia/Jakarta`.
 
-Frontend ini membutuhkan backend API Zoom Monitor yang menyediakan autentikasi dan integrasi Zoom. Kredensial Zoom dikelola melalui backend; aplikasi web tidak memanggil Zoom API langsung.
+Frontend ini membutuhkan backend API pengelolaan rapat daring yang menyediakan autentikasi dan integrasi Zoom. Kredensial Zoom dikelola melalui backend; aplikasi web tidak memanggil Zoom API langsung.
 
 ## Persiapan
 
 - Node.js **24** dan npm. Pengujian proyek dilakukan dengan Node.js 24.18.0.
-- Backend API Zoom Monitor yang dapat diakses browser.
+- Backend API pengelolaan rapat daring yang dapat diakses browser.
 - Akun pengguna aplikasi yang sudah dibuat pada backend.
 
 ## Menjalankan secara lokal
@@ -91,9 +91,17 @@ npm run lint
 npm run build
 ```
 
-Sepuluh tes regresi mencakup pergantian tanggal WIB, batas akhir recurring, format payload edit, validasi input, cakupan hapus, identitas sesi, dan isolasi cache antarlogin. Test runner memblokir permintaan `fetch`, HTTP, dan HTTPS. Tes ini tidak membuat, mengubah, atau menghapus meeting Zoom nyata.
+Tes regresi mencakup pergantian tanggal WIB, batas akhir recurring, format payload edit, validasi input, cakupan hapus, identitas sesi, isolasi cache antarlogin, penggunaan ulang cache, penggabungan permintaan yang sama, pembaruan latar belakang, pembatalan permintaan, dan sesi kedaluwarsa tanpa reload dokumen. Test runner memblokir permintaan `fetch`, HTTP, dan HTTPS. Tes ini tidak membuat, mengubah, atau menghapus meeting Zoom nyata.
 
 Pengujian integrasi nyata harus menggunakan akun Zoom khusus pengujian dan meeting baru yang diberi penanda QA. Hapus hanya data uji yang dibuat selama pengujian. Lihat [catatan verifikasi](UI_VERIFICATION.md) untuk cakupan dan hasil pengujian terakhir.
+
+## Cache dan pembaruan otomatis
+
+- Dashboard diperbarui setiap 30 detik; jadwal setiap 60 detik, selama halaman terkait terbuka dan tab terlihat. Pembaruan mengambil data melalui API tanpa reload dokumen. Data lama tetap tampil selama pembaruan; skeleton hanya untuk pemuatan awal tanpa cache.
+- Data akun dan profil dianggap segar selama 5 menit, rekaman 2 menit, dashboard 30 detik, dan jadwal 60 detik. Cache tersimpan di memori dan dibuang setelah tidak digunakan selama 15 menit. Reload browser memulai cache baru; logout atau login membersihkan cache sesi sebelumnya.
+- Kembali ke tab tidak otomatis mengambil ulang data. Ketersediaan booking hanya diperiksa setelah menekan Cari, Coba lagi, atau setelah booking berhasil. Membuka halaman, kembali ke tab, koneksi pulih, dan invalidasi cache tidak memicu pencarian. Setiap pencarian manual mengambil hasil baru, termasuk untuk parameter yang sama. Form booking tetap mengandalkan validasi konflik dari backend.
+- Perubahan meeting membatalkan kesegaran cache jadwal, dashboard, dan ketersediaan. Filter jadwal serta rekaman memakai cache terpisah berdasarkan parameter. Memuat filter baru yang belum memiliki cache tetap menampilkan pemuatan awal.
+- Permintaan jadwal, ringkasan dashboard, dan rekaman menerima sinyal pembatalan agar permintaan yang tidak lagi dipakai dapat dihentikan. Refresh yang gagal mempertahankan data terakhir dan menampilkan keterangan kegagalan. Sesi kedaluwarsa menuju login melalui router tanpa reload penuh.
 
 ## Struktur proyek
 
@@ -149,3 +157,7 @@ Publikasikan isi folder `dist/` ke hosting statis. Konfigurasikan fallback SPA k
 - [Arah desain](DESIGN.md)
 - [Hasil QA dan batasan pengujian](UI_VERIFICATION.md)
 - [Asal aset dan lisensi font](public/ASSET_SOURCES.md)
+
+## Pembaruan autentikasi API
+
+Web menggunakan token dalam memori tab dan kontrak sesi API yang baru. Reload meminta login kembali. Lihat [panduan integrasi autentikasi](docs/auth-v2-integration.md) untuk penyimpanan token, pembatasan refresh, HTTPS, dan urutan penerapan backend/frontend. Jangan menyimpan password atau secret backend pada variabel VITE.

@@ -83,12 +83,14 @@ export const SchedulesPage: React.FC = () => {
   const {
     data: schedules = { live_meetings: [], upcoming_meetings: [], past_meetings: [] },
     isLoading,
+    isFetching,
+    dataUpdatedAt,
     refetch,
     isError,
   } = useQuery({
     queryKey: queryKeys.schedules(appliedFilter),
-    queryFn: () => bookingsApi.listSchedules(appliedFilter),
-    refetchInterval: 60000, // 60s auto-refresh
+    queryFn: ({ signal }) => bookingsApi.listSchedules(appliedFilter, signal),
+    refetchInterval: 60_000,
   });
 
   // Fetch meeting detail from Zoom when detail modal opens
@@ -108,6 +110,7 @@ export const SchedulesPage: React.FC = () => {
     onSuccess: () => {
       toast.success('Meeting live berhasil diakhiri');
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['availability'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       setEndingMeeting(null);
     },
@@ -123,6 +126,7 @@ export const SchedulesPage: React.FC = () => {
     onSuccess: () => {
       toast.success('Jadwal meeting berhasil dihapus');
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['availability'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       setDeletingMeeting(null);
     },
@@ -137,7 +141,9 @@ export const SchedulesPage: React.FC = () => {
       bookingsApi.updateMeeting(id, data),
     onSuccess: () => {
       toast.success('Jadwal meeting berhasil diperbarui');
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['availability'] });
       setEditingMeeting(null);
     },
     onError: (err: any) => {
@@ -193,50 +199,45 @@ export const SchedulesPage: React.FC = () => {
     }
 
     return (
-      <div className="overflow-x-auto">
-        <table className="account-table w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-              <th className="py-3 px-4">Topik Meeting</th>
-              <th className="py-3 px-4">Akun & Host</th>
-              <th className="py-3 px-4">Waktu Mulai</th>
-              <th className="py-3 px-4">Durasi</th>
-              <th className="py-3 px-4">Tipe</th>
-              <th className="py-3 px-4 text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-sm">
+      <div className="meeting-list">
+        <div className="meeting-list-heading">
+          <div><h2>{type === 'upcoming' ? 'Rapat mendatang' : type === 'live' ? 'Rapat berlangsung' : 'Riwayat rapat'}</h2>
+            <p>{items.length} jadwal · Semua waktu dalam WIB</p></div>
+          <span className="meeting-zone"><Clock size={14} aria-hidden="true" /> WIB</span>
+        </div>
+        <table className="meeting-table">
+          <caption className="sr-only">Daftar meeting {type === 'upcoming' ? 'mendatang' : type === 'live' ? 'berlangsung' : 'selesai'}, waktu dalam WIB</caption>
+          <thead><tr><th scope="col">Meeting</th><th scope="col">Jadwal · WIB</th><th scope="col">Akun & host</th><th scope="col" className="meeting-action-heading">Kelola</th></tr></thead>
+          <tbody>
             {items.map((m) => (
-              <tr key={meetingRowKey(m)} data-account className="hover:bg-slate-50/80 transition-colors">
-                <td data-label="Topik meeting" className="py-3.5 px-4">
-                  <span className="font-semibold text-slate-900 block">{m.topic}</span>
-                  <span className="text-xs font-mono text-slate-400">ID: {m.meeting_id}</span>
+              <tr key={meetingRowKey(m)}>
+                <td className="meeting-subject">
+                  <div className="meeting-symbol" aria-hidden="true"><Calendar size={21} /></div>
+                  <div className="meeting-subject-copy">
+                    <span className="meeting-title">{m.topic}</span>
+                    <div className="meeting-meta"><span>ID {m.meeting_id}</span><span className="meeting-kind">{isRecurringMeeting(m) && <Repeat size={12} aria-hidden="true" />}{isRecurringMeeting(m) ? 'Berulang' : 'Sekali'}</span></div>
+                  </div>
                 </td>
-                <td data-label="Akun & host" className="py-3.5 px-4 text-xs">
-                  <span className="font-medium text-slate-800 block">{m.account_name}</span>
-                  <span className="text-slate-500">Host: {m.host || '-'}</span>
+                <td data-label="Jadwal" className="meeting-time">
+                  <strong>{formatWIBDateTime(m.start_time)}</strong>
+                  <span>Sampai {formatWIBTime(m.end_time)} · {m.duration} menit</span>
                 </td>
-                <td data-label="Waktu" className="py-3.5 px-4 text-xs">
-                  <span className="font-medium text-slate-900 block">{formatWIBDateTime(m.start_time)}</span>
-                  <span className="text-slate-400">s/d {formatWIBTime(m.end_time)}</span>
+                <td data-label="Akun" className="meeting-account">
+                  <strong>{m.account_name}</strong><span>{m.host || 'Host belum tersedia'}</span>
                 </td>
-                <td data-label="Durasi" className="py-3.5 px-4 text-xs text-slate-600">
-                  {m.duration} Menit
-                </td>
-                <td data-label="Tipe" className="py-3.5 px-4">
-                  {m.type === 8 ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
-                      <Repeat className="w-3 h-3" />
-                      Recurring
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-                      One-Time
-                    </span>
-                  )}
-                </td>
-                <td data-label="Aksi" className="py-3.5 px-4 text-right">
-                  <div className="flex items-center justify-end gap-1.5">
+                <td className="meeting-actions-cell">
+                  <div className="meeting-actions">
+                    {/* Details action */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDetailMeeting({ accountId: m.account_id, meetingId: m.meeting_id })}
+                      className="meeting-detail text-blue-600"
+                      aria-label={`Detail meeting ${m.topic}`}
+                      title="Lihat Detail"
+                    >
+                      <Info className="w-3.5 h-3.5" /><span>Detail</span>
+                    </Button>
                     {/* Live Actions */}
                     {type === 'live' && (
                       <>
@@ -269,6 +270,7 @@ export const SchedulesPage: React.FC = () => {
                           onClick={() => handleOpenEdit(m)}
                           disabled={isRecurringMeeting(m)}
                           className="h-8 w-8 text-slate-600 hover:text-slate-900"
+                          aria-label={`Edit meeting ${m.topic}`}
                           title={isRecurringMeeting(m) ? 'Edit meeting berulang belum tersedia' : 'Edit Jadwal'}
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -281,23 +283,15 @@ export const SchedulesPage: React.FC = () => {
                             setDeletingMeeting(m);
                           }}
                           className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          title="Hapus Meeting"
+                          aria-label={`Hapus meeting ${m.topic}`}
+                          title="Hapus meeting"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </>
                     )}
 
-                    {/* Details action */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setDetailMeeting({ accountId: m.account_id, meetingId: m.meeting_id })}
-                      className="h-8 w-8 text-slate-500 hover:text-slate-800"
-                      title="Lihat Detail"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                    </Button>
+
                   </div>
                 </td>
               </tr>
@@ -309,26 +303,29 @@ export const SchedulesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <PageBanner title="Agenda meeting" description="Lihat meeting yang berlangsung, jadwal berikutnya, dan riwayat pertemuan." image="schedule_room.webp" />
+    <div className="schedule-page space-y-6">
+      <PageBanner title="Jadwal rapat" description="Pantau rapat yang berlangsung, agenda mendatang, dan riwayat rapat Diskominfo Sumut." image="schedule_room.webp" />
       {schedules.upcoming_meetings?.some(isRecurringMeeting) && <p className="text-xs text-slate-500">Edit topik dan durasi untuk meeting berulang belum tersedia.</p>}
 
-      {isError && <QueryError onRetry={() => refetch()} />}
+      <p className="min-h-10 sm:min-h-5 text-xs text-slate-500" role="status">
+        {isError && dataUpdatedAt > 0 ? 'Pembaruan gagal. Jadwal terakhir tetap ditampilkan.' : isFetching && !isLoading ? 'Memperbarui jadwal…' : 'Diperbarui otomatis setiap 60 detik saat halaman aktif.'}
+      </p>
+      {isError && !dataUpdatedAt && <QueryError onRetry={() => refetch()} />}
       {/* Filter Bar Card */}
-      <Card className="border-slate-200 bg-white shadow-xs">
-        <CardContent className="p-4">
+      <Card className="schedule-filters">
+        <CardContent className="p-5">
           <form onSubmit={event => { event.preventDefault(); applyFilters(); }} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 items-end">
             <div>
-              <Label htmlFor="schedule_search" className="text-xs">Cari Topik Meeting</Label>
+              <Label htmlFor="schedule_search" className="text-xs">Cari Topik Rapat</Label>
               <div className="relative">
                 <Input
-                  placeholder="Ketik topik meeting..."
+                  placeholder="Ketik topik rapat..."
                   id="schedule_search"
                   value={filter.search || ''}
                   onChange={(e) => setFilter({ ...filter, search: e.target.value })}
                   className="h-9 text-xs pl-8"
                 />
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
@@ -397,24 +394,24 @@ export const SchedulesPage: React.FC = () => {
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="live" className="space-y-4">
-        <TabsList className="bg-slate-200/70 p-1">
+      <Tabs defaultValue="upcoming" className="schedule-tabs space-y-5">
+        <TabsList className="schedule-tab-list">
           <TabsTrigger value="live" className="text-xs font-semibold gap-2">
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-            <span>Sedang Berlangsung ({schedules.live_meetings?.length || 0})</span>
+            <span>Berlangsung <b>{schedules.live_meetings?.length || 0}</b></span>
           </TabsTrigger>
           <TabsTrigger value="upcoming" className="text-xs font-semibold gap-2">
             <Clock className="w-3.5 h-3.5 text-blue-600" />
-            <span>Mendatang ({schedules.upcoming_meetings?.length || 0})</span>
+            <span>Mendatang <b>{schedules.upcoming_meetings?.length || 0}</b></span>
           </TabsTrigger>
           <TabsTrigger value="past" className="text-xs font-semibold gap-2">
             <Calendar className="w-3.5 h-3.5 text-slate-500" />
-            <span>Riwayat / Selesai ({schedules.past_meetings?.length || 0})</span>
+            <span>Riwayat <b>{schedules.past_meetings?.length || 0}</b></span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="live">
-          <Card className="border-slate-200 overflow-hidden shadow-xs">
+          <Card className="schedule-results">
             <CardContent className="p-0">
               {renderMeetingTable(schedules.live_meetings || [], 'live')}
             </CardContent>
@@ -422,7 +419,7 @@ export const SchedulesPage: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="upcoming">
-          <Card className="border-slate-200 overflow-hidden shadow-xs">
+          <Card className="schedule-results">
             <CardContent className="p-0">
               {renderMeetingTable(schedules.upcoming_meetings || [], 'upcoming')}
             </CardContent>
@@ -430,7 +427,7 @@ export const SchedulesPage: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="past">
-          <Card className="border-slate-200 overflow-hidden shadow-xs">
+          <Card className="schedule-results">
             <CardContent className="p-0">
               {renderMeetingTable(schedules.past_meetings || [], 'past')}
             </CardContent>
@@ -450,12 +447,12 @@ export const SchedulesPage: React.FC = () => {
 
           <div className="space-y-4 py-2">
             <div>
-              <Label htmlFor="schedule_topic" required>Topik Meeting</Label>
+              <Label htmlFor="schedule_topic" required>Topik Rapat</Label>
               <Input
                 value={editTopic}
                 id="schedule_topic"
                 onChange={(e) => setEditTopic(e.target.value)}
-                placeholder="Topik meeting..."
+                placeholder="Topik rapat..."
               />
             </div>
 

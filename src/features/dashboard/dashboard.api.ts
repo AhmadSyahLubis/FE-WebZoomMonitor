@@ -7,8 +7,8 @@ import type {
 } from '@/types/api';
 
 export const dashboardApi = {
-  getSummary: async (): Promise<DashboardAccountSummary[]> => {
-    const res = await api.get<APIResponse<DashboardAccountSummary[]>>('/dashboard');
+  getSummary: async (signal?: AbortSignal): Promise<DashboardAccountSummary[]> => {
+    const res = await api.get<APIResponse<DashboardAccountSummary[]>>('/dashboard', { signal });
     return res.data.data || [];
   },
 

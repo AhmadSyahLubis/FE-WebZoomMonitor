@@ -114,3 +114,75 @@ Live authentication, Zoom API connectivity, playback, downloads, and production 
 - R-29 PASS: navy/slate neutrals and one cyan accent; rose/ochre reserved for status.
 - R-30 PASS: the existing product's Flutter application supplies the reference.
 - R-31 PASS: major visual decisions have explicit one-line reasons in `DESIGN.md`.
+
+## Neumorphism and schedule redesign — 19 October 2026
+
+This section supersedes the earlier visual treatment where it differs. User direction: redesign the Mendatang table, apply neumorphism across the web, and preserve the original blue identity. ENERGY 1 / RHYTHM 2 / MOTION 1 remain unchanged.
+
+- Four semantic columns group meeting identity, WIB schedule/duration, account/host, and actions. Mendatang is the initial tab. Long titles wrap without truncation. Types 3 and 8 share the Berulang label.
+- At 700 px of available result-panel width, rows become labeled cards. This accommodates a sidebar on medium screens as well as phones. The table caption and column scopes remain present; the browser accessibility tree still exposes the table and rows.
+- Raised cards and inset fields/navigation implement the requested neumorphism. Primary actions retain navy fills; field borders remain explicit. Logo geometry and blue palette are preserved. Shared cards, inputs, buttons, dialogs, dashboard summary, login shell, and navigation receive the treatment.
+- Text contrast against #EAF0F7: main text 13.17:1, secondary text 5.22:1, destructive text 5.36:1. White on navy is 10.79:1. Field boundary #71859E is 3.30:1 against the field background. Disabled controls are exempt. Focus and reduced-motion rules remain active.
+- Actual SchedulesPage rendered into an isolated local preview using a seeded QueryClient and the offline network guard. Three synthetic records cover one-time, recurring, and long-title rows. Desktop 1280 px and phone 390 px were visually inspected through browser screenshots. Preview code is ignored under node_modules/.cache and is absent from the production bundle. Static preview does not validate interaction handlers.
+- The running authenticated dashboard and schedules page were inspected read-only for integration. No booking, editing, deleting, ending, or account changes were performed. Existing mutation handlers and confirmation dialogs are retained.
+- All 10 offline tests passed; lint passed; production build passed. The regression suite covers recurring-edit protection, explicit deletion scope, WIB dates, validation, and session cache isolation.
+- Screenshots: C:/Users/AHMAD SYAH/.codex/tmp/zoom-monitor-preview/neumorphism-desktop.png and neumorphism-mobile.png. These show synthetic preview records.
+
+Delivery gate: hierarchy, reusable components, mobile reflow, explicit labels, reduced motion, empty/loading/error branches, original brand assets, and production build checked. Broader historical gates above were not rerun in full for this visual change; no new claims about live Zoom mutation or playback testing are made.
+
+Follow-up refinement: sidebar and top bar now use the exact page background, with no hard separating borders. Low-opacity directional shadows provide a soft edge. The selected navigation item uses an inset surface and navy text without a contrasting vertical stripe. The running schedules page was inspected and saved as C:/Users/AHMAD SYAH/.codex/tmp/zoom-monitor-preview/soft-sidebar-topbar.png. Detail appears first in both visual order and keyboard order.
+
+## Cache and background-refresh optimization — 19 October 2026
+
+Investigation found dashboard polling at 30 seconds, schedule polling at 60 seconds, global freshness of only 10 seconds, and focus-triggered refetching. No interval called document reload. The only explicit hard navigation was login after refresh-token failure; the existing reactive route guard can perform that transition without reloading the document.
+
+Changes: per-resource freshness (accounts/profile/specs 5 minutes, recordings 2 minutes, schedules 60 seconds, dashboard/status 30 seconds), inactive memory-cache lifetime 15 minutes, focus refetch disabled except availability, and explicit hidden-tab polling suspension. Existing cached rows remain visible during refetch and after a refetch error. Dashboard automatic polling no longer shows the manual refresh spinner. An inline schedule status reserves vertical space and does not replace the result list. Dashboard cached-data errors also use the existing text area instead of inserting a full alert above cards. Account clock updates align with minute boundaries instead of running every second.
+
+Polling endpoints and recordings accept AbortSignal. Successful meeting actions invalidate availability, dashboard, and schedule caches. Repeating the same availability search now explicitly rechecks the backend. Availability has zero freshness to avoid treating cached slots as current. Existing login/logout cache clearing remains intact. No cache persistence or service worker was introduced.
+
+Offline regression coverage checks fresh-cache reuse, concurrent-request deduplication, invalidation, retained rows during background fetching and failure, unchanged-data reference sharing, query policies, cancellation on leaving an observed view, and expired refresh without requiring window.location. Real Zoom accounts and meetings were not mutated during this work. Browser inspection uses the existing schedules page; the automated regression suite prohibits network requests.
+
+Reference: https://tanstack.com/query/latest/docs/framework/react/guides/window-focus-refetching and https://tanstack.com/query/latest/docs/framework/react/guides/caching .
+
+Validation result: all 16 offline regression tests passed; production build and lint passed. Vite test servers disable WebSocket listeners so parallel tests do not compete with the running development server. Remaining boundary: first visits or newly submitted filters without cached data still show initial loading; only background refresh preserves an already loaded result set.
+
+## Booking search automatic requests corrected — 19 October 2026
+
+Supersedes the availability focus exception above. Evidence: SearchBookingPage mounted an enabled availability query immediately, and the availability query defaults explicitly allowed focus refetch with zero freshness. That combination produced unsolicited requests when opening the page or returning to the tab. It was data refetching, not interval-driven document reload.
+
+Availability observers are now disabled by default. Form submission explicitly fetches the submitted query key; every manual search is fresh, including identical parameters. Mount, focus, reconnect, invalidation, polling, and automatic retry cannot initiate availability requests. Retry and successful booking retain their explicit result-refresh behavior. The initial page shows instructions instead of implying a completed empty search. Room actions are disabled while a search is pending or has failed, preventing use of old cached availability during a new check. The API receives AbortSignal for canceled searches.
+
+A new offline regression verifies zero requests on mount/focus/reconnect/invalidation and two fresh requests for two explicit searches. All 17 tests passed; build and lint passed. The running booking page was inspected read-only and shows the initial manual-search state. No real booking or meeting/account change was performed.
+
+## Institutional branding — 29 October 2026
+
+User direction: use the official Pemerintah Provinsi Sumatera Utara emblem, adapt labels to Diskominfo Provinsi Sumatera Utara, retain the existing blue interface, and assign visible copyright to Dinas Komunikasi dan Informatika Provinsi Sumatera Utara.
+
+- Official full-size and favicon PNGs downloaded from the Diskominfo website, with source URLs recorded in public/ASSET_SOURCES.md. Original full colors, transparency, and proportions are preserved; CSS uses object-fit: contain without cropping or rounded clipping.
+- Login, sidebar, mobile header, document title, favicon, banner eyebrow, page descriptions, navigation, and relevant form labels reflect the institution. Company-specific language was removed from the active interface. API identifiers, routes, account data, and blue color tokens were preserved.
+- A shared copyright component displays the full requested organization name on login and every authenticated route. The year is evaluated in Asia/Jakarta. Mobile footers reserve room above the navigation bar.
+- The running login page was inspected at desktop and 390 px mobile widths. An isolated SSR preview of the actual AppLayout and SchedulesPage, using synthetic query data and the offline network guard, verified the sidebar logo and copyright above mobile navigation. No real account or meeting was changed; no sign-in was performed.
+- All 17 offline tests passed. Production build and lint passed without warnings. No new behavior tests were added for copy and asset placement.
+- Evidence: C:/Users/AHMAD SYAH/.codex/tmp/zoom-monitor-preview/diskominfo-login-desktop.png, diskominfo-login-mobile.png, diskominfo-shell-desktop.png, and diskominfo-copyright-mobile.png.
+
+Earlier visual gates that refer to the original Monitor monogram are superseded by this user-requested institutional identity. Existing photographs, navigation symbols, typography, neumorphism, and color palette remain in use.
+
+## Application name — 29 October 2026
+
+At the user's request, the application name is now Sistem Informasi Pengelolaan Virtual Meeting, written in full without an acronym. Login heading/footer, shared page-banner label, browser title, documentation headings, and package metadata use the new name. No active interface reference to Zoom Monitor remains. Existing repository URLs and historical asset provenance retain their original names. The provincial emblem, institutional copyright, palette, API behavior, and routes are unchanged. Production build and lint passed; the running login page confirms the full name in the heading, footer, and browser title.
+
+Copy preference: user prefers established English product terms. Login description now reads "Monitoring akun Zoom, booking jadwal meeting, dan pengelolaan rekaman meeting Diskominfo Provinsi Sumatera Utara." Feature labels use Monitoring and Booking; booking navigation, page headings, and relevant actions follow the same terms. Browser preview verified; build and lint passed. No behavior changes.
+
+## Kolaborasi Sumut Berkah companion mark — 29 October 2026
+
+At the user's request, the official white Kolaborasi Sumut Berkah PNG from https://disdik.sumutprov.go.id/web/img/kolaborasi-sumut-berkah.png accompanies the provincial emblem in login, desktop sidebar, and mobile header. Asset provenance is recorded in public/ASSET_SOURCES.md. The source image is unchanged; CSS preserves its aspect ratio, with existing navy backing for contrast. The provincial emblem remains the favicon.
+
+Running login was visually inspected on desktop and at 390 px. An isolated SSR preview of the actual application layout verified the desktop pair and mobile header at 320 px with synthetic data and the offline network guard. Mobile route title is omitted from the compact header because the page retains its own heading. The sidebar's optional note is hidden on short viewports to reserve navigation space. Build and lint passed. No account data, API behavior, or meeting was changed.
+
+Screenshots: C:/Users/AHMAD SYAH/.codex/tmp/zoom-monitor-preview/kolaborasi-login-desktop.png, kolaborasi-login-mobile.png, and kolaborasi-mobile-header.png.
+
+## Transparent companion logo — 29 October 2026
+
+The supplied official PNG was confirmed RGBA with an alpha range of 0–255; the visible blue rectangle came from CSS, not the source image. Following the user's transparency request, the rectangle, padding, rounded corners, and login border were removed. The original PNG alpha channel now supplies a CSS mask, rendered navy on light sidebar/header surfaces and white on login. The component retains its accessible image name and source proportions. This is a CSS color treatment of the existing official PNG, not a newly sourced dark PNG variant or altered raster file.
+
+Login and the actual application layout rendered with isolated synthetic data were visually checked. Evidence: C:/Users/AHMAD SYAH/.codex/tmp/zoom-monitor-preview/kolaborasi-transparent-login.png and kolaborasi-transparent-sidebar.png. Build and lint passed; no real accounts or meetings were changed.

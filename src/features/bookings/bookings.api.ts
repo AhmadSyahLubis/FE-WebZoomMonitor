@@ -17,9 +17,10 @@ export const bookingsApi = {
     date: string;
     start_time: string;
     duration?: number;
-  }): Promise<AvailabilityResult[]> => {
+  }, signal?: AbortSignal): Promise<AvailabilityResult[]> => {
     const res = await api.get<APIResponse<AvailabilityResult[]>>('/bookings/search', {
       params,
+      signal,
     });
     return res.data.data || [];
   },
@@ -29,9 +30,10 @@ export const bookingsApi = {
     return res.data.data!;
   },
 
-  listSchedules: async (filter?: ListSchedulesFilter): Promise<SchedulesResponse> => {
+  listSchedules: async (filter?: ListSchedulesFilter, signal?: AbortSignal): Promise<SchedulesResponse> => {
     const res = await api.get<APIResponse<SchedulesResponse>>('/bookings', {
       params: filter,
+      signal,
     });
     return (
       res.data.data || {

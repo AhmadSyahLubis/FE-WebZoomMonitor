@@ -9,6 +9,7 @@ interface AuthState {
   refreshToken: string | null;
   deviceId: string;
   isAuthenticated: boolean;
+  version: number;
 
   login: (data: TokenResponse) => void;
   logout: () => void;
@@ -16,48 +17,45 @@ interface AuthState {
   setUser: (user: UserResponse) => void;
 }
 
-const initialAccessToken = localStorage.getItem('access_token');
-const initialRefreshToken = localStorage.getItem('refresh_token');
-const storedUser = localStorage.getItem('user');
+// Legacy sessions have no backend session binding and must not be restored.
+try { for (const key of ['access_token', 'refresh_token', 'user']) localStorage.removeItem(key); } catch { /* Storage can be unavailable in private browsing. */ }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: storedUser ? JSON.parse(storedUser) : null,
-  accessToken: initialAccessToken,
-  refreshToken: initialRefreshToken,
+export const useAuthStore = create<AuthState>((set, get) => ({
+  user: null,
+  accessToken: null,
+  refreshToken: null,
   deviceId: getWebDeviceId(),
-  isAuthenticated: !!initialAccessToken,
+  isAuthenticated: false,
+  version: 0,
 
   login: (data: TokenResponse) => {
     queryClient.clear();
-    localStorage.setItem('access_token', data.access_token);
-    localStorage.setItem('refresh_token', data.refresh_token);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    if (!data.access_token || !data.refresh_token || !data.user?.id) throw new Error('Respons login tidak valid');
 
     set({
       user: data.user,
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
       isAuthenticated: true,
+      version: get().version + 1,
     });
   },
 
   logout: () => {
     queryClient.clear();
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
+    try { for (const key of ['access_token', 'refresh_token', 'user']) localStorage.removeItem(key); } catch { /* No persistent tokens are used. */ }
 
     set({
       user: null,
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      version: get().version + 1,
     });
   },
 
   updateTokens: (accessToken: string, refreshToken: string) => {
-    localStorage.setItem('access_token', accessToken);
-    localStorage.setItem('refresh_token', refreshToken);
+    if (!get().isAuthenticated || !accessToken || !refreshToken) throw new Error('Sesi tidak aktif');
 
     set({
       accessToken,
@@ -67,7 +65,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   setUser: (user: UserResponse) => {
-    localStorage.setItem('user', JSON.stringify(user));
-    set({ user });
+    if (get().isAuthenticated) set({ user });
   },
 }));

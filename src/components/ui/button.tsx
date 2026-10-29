@@ -40,6 +40,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, isLoading, children, disabled, ...props }, ref) => {
     return (
       <button
+        data-variant={variant || 'default'}
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         disabled={disabled || isLoading}

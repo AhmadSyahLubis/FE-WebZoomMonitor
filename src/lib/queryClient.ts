@@ -4,11 +4,33 @@ import type { ListSchedulesFilter, ListRecordingsFilter } from '@/types/api';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      refetchOnWindowFocus: true,
-      staleTime: 10000, // 10 seconds stale time
+      retry: (failureCount, error) => {
+        const status = (error as { response?: { status?: number } }).response?.status;
+        return failureCount < 1 && (!status || status === 408 || status === 429 || status >= 500);
+      },
+      refetchOnWindowFocus: false,
+      refetchIntervalInBackground: false,
+      staleTime: 30_000,
+      gcTime: 15 * 60_000,
     },
   },
+});
+
+queryClient.setQueryDefaults(['dashboard'], { staleTime: 30_000 });
+queryClient.setQueryDefaults(['dashboard', 'specs'], { staleTime: 5 * 60_000 });
+queryClient.setQueryDefaults(['schedules'], { staleTime: 60_000 });
+queryClient.setQueryDefaults(['accounts'], { staleTime: 5 * 60_000 });
+queryClient.setQueryDefaults(['recordings'], { staleTime: 2 * 60_000 });
+queryClient.setQueryDefaults(['auth', 'me'], { staleTime: 5 * 60_000 });
+// Availability is fetched explicitly by search, retry, or a completed booking.
+queryClient.setQueryDefaults(['availability'], {
+  enabled: false,
+  staleTime: 0,
+  retry: false,
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+  refetchInterval: false,
 });
 
 export const queryKeys = {

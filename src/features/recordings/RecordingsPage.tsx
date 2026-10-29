@@ -63,7 +63,7 @@ export const RecordingsPage: React.FC = () => {
     isError,
   } = useQuery({
     queryKey: queryKeys.recordings(appliedFilter),
-    queryFn: () => recordingsApi.list(appliedFilter),
+    queryFn: ({ signal }) => recordingsApi.list(appliedFilter, signal),
   });
 
   const toggleExpand = (id: string) => {
@@ -88,7 +88,7 @@ export const RecordingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <PageBanner title="Arsip rekaman meeting" description="Temukan kembali video, audio, dan transkrip dari meeting perusahaan." image="recordings_console.webp" />
+      <PageBanner title="Arsip rekaman rapat" description="Telusuri video, audio, dan transkrip rapat Diskominfo Provinsi Sumatera Utara." image="recordings_console.webp" />
 
       {isError && <QueryError onRetry={() => refetch()} />}
       {/* Filter Card */}

@@ -51,8 +51,14 @@ type SearchFormData = z.infer<typeof searchSchema>;
 
 type BookingFormData = z.infer<typeof bookingSchema>;
 
+const availabilityOptions = (params: SearchFormData) => ({
+  queryKey: queryKeys.availability(params),
+  queryFn: ({ signal }: { signal: AbortSignal }) => bookingsApi.searchAvailability(params, signal),
+});
+
 export const SearchBookingPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const [hasSearched, setHasSearched] = useState(false);
 
   // Search parameters state
   const [searchParams, setSearchParams] = useState<{
@@ -81,15 +87,15 @@ export const SearchBookingPage: React.FC = () => {
 
   // Availability Query
   const {
-    data: availability = [],
+    data: availabilityData = [],
     isLoading,
     isFetching,
     refetch,
     isError,
   } = useQuery({
-    queryKey: queryKeys.availability(searchParams),
-    queryFn: () => bookingsApi.searchAvailability(searchParams),
+    ...availabilityOptions(searchParams),
   });
+  const availability = hasSearched ? availabilityData : [];
 
   // Booking form
   const {
@@ -130,7 +136,9 @@ export const SearchBookingPage: React.FC = () => {
   });
 
   const onSearch = (data: SearchFormData) => {
+    setHasSearched(true);
     setSearchParams(data);
+    void queryClient.fetchQuery(availabilityOptions(data)).catch(() => undefined);
   };
 
   const handleOpenBookModal = (room: AvailabilityResult) => {
@@ -168,14 +176,14 @@ export const SearchBookingPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <PageBanner title="Rencanakan meeting Anda" description="Pilih waktu, temukan akun yang tersedia, lalu buat booking meeting." image="search_availability.webp" />
+      <PageBanner title="Booking virtual meeting" description="Pilih jadwal dan akun Zoom untuk rapat Diskominfo Provinsi Sumatera Utara." image="search_availability.webp" />
 
       {/* Search Parameters Card */}
       <Card className="border-slate-200 bg-white shadow-xs">
         <CardContent className="p-5">
           <form onSubmit={handleSearchSubmit(onSearch)} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-end">
             <div>
-              <Label htmlFor="booking_date" required>Tanggal Meeting</Label>
+              <Label htmlFor="booking_date" required>Tanggal Rapat</Label>
               <div className="relative">
                 <Input
                   {...registerSearch('date')}
@@ -197,7 +205,7 @@ export const SearchBookingPage: React.FC = () => {
             </div>
 
             <div>
-              <Label htmlFor="booking_duration" required>Durasi Meeting</Label>
+              <Label htmlFor="booking_duration" required>Durasi Rapat</Label>
               <select
                 {...registerSearch('duration')}
                 id="booking_duration"
@@ -222,19 +230,25 @@ export const SearchBookingPage: React.FC = () => {
       </Card>
 
       {/* Availability Results Section */}
-      {isError && <QueryError onRetry={() => refetch()} />}
+      {hasSearched && isError && <QueryError onRetry={() => refetch()} />}
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2 items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
             <BrandIcon name="nav_search" className="!w-4 !h-4 text-blue-600" />
-            <span>Hasil Pencarian ({availability.length} Akun Terdaftar)</span>
+            <span>Hasil pencarian{hasSearched && ` (${availability.length} akun)`}</span>
           </h2>
           <span className="text-xs text-slate-500">
-            {searchParams.date} pukul {searchParams.start_time} WIB ({searchParams.duration} mnt)
+            {hasSearched && <>{searchParams.date} pukul {searchParams.start_time} WIB ({searchParams.duration} mnt)</>}
           </span>
         </div>
 
-        {isLoading ? (
+        {!hasSearched ? (
+          <Card className="p-10 text-center">
+            <img src="/icons/state_search.svg" alt="" className="w-40 h-24 mx-auto mb-3" />
+            <p className="text-slate-800 font-semibold">Cari akun untuk jadwal meeting Anda</p>
+            <p className="text-xs text-slate-500 mt-2">Pilih tanggal, waktu, dan durasi, lalu tekan Cari Ketersediaan.</p>
+          </Card>
+        ) : isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
               <Card key={i} className="p-5 space-y-3">
@@ -312,19 +326,21 @@ export const SearchBookingPage: React.FC = () => {
                     <div className="mt-5 pt-3 border-t border-slate-100">
                       {isAvail ? (
                         <Button
+                          disabled={isFetching || isError}
                           onClick={() => handleOpenBookModal(item)}
                           className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
                         >
                           <CalendarPlus className="w-4 h-4 mr-1.5" />
-                          <span>Pesan Ruang Ini</span>
+                          <span>Booking Akun Ini</span>
                         </Button>
                       ) : (
                         <Button
                           variant="outline"
+                          disabled={isFetching || isError}
                           onClick={() => handleOpenBookModal(item)}
                           className="w-full text-xs text-rose-700 hover:bg-rose-50 border-rose-200"
                         >
-                          <span>Pesan Tetap (Force Booking)</span>
+                          <span>Tetap Booking (Force Booking)</span>
                         </Button>
                       )}
                     </div>
