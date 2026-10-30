@@ -88,7 +88,7 @@ export const RecordingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <PageBanner title="Arsip rekaman rapat" description="Telusuri video, audio, dan transkrip rapat Diskominfo Provinsi Sumatera Utara." image="recordings_console.webp" />
+      <PageBanner title="Arsip rekaman rapat" description="Telusuri video, audio, dan transkrip rapat untuk kebutuhan Pemerintah Provinsi Sumatera Utara." image="recordings_console.webp" />
 
       {isError && <QueryError onRetry={() => refetch()} />}
       {/* Filter Card */}

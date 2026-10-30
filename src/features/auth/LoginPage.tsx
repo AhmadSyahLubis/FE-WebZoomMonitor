@@ -45,7 +45,7 @@ export function LoginPage() {
         <section className="login-visual">
           <img src="/images/hybrid_desk_login.webp" alt="" />
           <div className="login-institution-logos"><div className="login-brand"><img src="/brand/sumatera-utara.png" alt="Lambang Pemerintah Provinsi Sumatera Utara" /><span>Pemerintah Provinsi<br />Sumatera Utara</span></div><KolaborasiLogo /></div>
-          <div className="login-visual-copy"><h1>Sistem Informasi Pengelolaan Virtual Meeting</h1><p>Monitoring akun Zoom, booking jadwal meeting, dan pengelolaan rekaman meeting Diskominfo Provinsi Sumatera Utara.</p><div className="login-features"><span><BrandIcon name="nav_dashboard" />Monitoring</span><span><BrandIcon name="nav_calendar" />Booking</span><span><BrandIcon name="nav_recordings" />Rekaman</span></div></div>
+          <div className="login-visual-copy"><h1>Sistem Informasi Pengelolaan Virtual Meeting</h1><p>Monitoring akun Zoom, booking jadwal meeting, dan pengelolaan rekaman untuk kebutuhan Pemerintah Provinsi Sumatera Utara.</p><div className="login-features"><span><BrandIcon name="nav_dashboard" />Monitoring</span><span><BrandIcon name="nav_calendar" />Booking</span><span><BrandIcon name="nav_recordings" />Rekaman</span></div></div>
         </section>
         <section className="login-form-panel" aria-labelledby="login-title">
           <span className="text-xs font-medium text-blue-600">Dinas Komunikasi dan Informatika<br />Provinsi Sumatera Utara</span>

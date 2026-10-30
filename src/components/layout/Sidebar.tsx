@@ -23,7 +23,7 @@ export function Sidebar() {
         {navItems.map(item => <NavLink key={item.path} to={item.path} className={({ isActive }) => `nav-item ${isActive ? 'is-active' : ''}`}><BrandIcon name={item.icon} /><span>{item.title}</span></NavLink>)}
       </nav>
       <div className="sidebar-bottom">
-        <div className="sidebar-note"><BrandIcon name="nav_calendar" /><strong>Koordinasi rapat instansi.</strong><p>Pantau akun Zoom, jadwal, dan rekaman rapat Diskominfo Sumut.</p></div>
+        <div className="sidebar-note"><BrandIcon name="nav_calendar" /><strong>Koordinasi rapat instansi.</strong><p>Layanan meeting Pemerintah Provinsi Sumatera Utara, dikelola oleh Diskominfo.</p></div>
         <NavLink to="/profile" className="sidebar-profile"><span className="user-avatar">{user?.name?.[0]?.toUpperCase() || <User size={18} />}</span><span><strong>{user?.name || 'Pengguna'}</strong><small>@{user?.username || 'pengguna'}</small></span></NavLink>
         <button type="button" onClick={handleLogout} className="logout-button"><LogOut size={17} />Keluar dari akun</button>
       </div>
