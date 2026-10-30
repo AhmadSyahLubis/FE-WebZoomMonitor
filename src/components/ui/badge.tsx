@@ -14,7 +14,7 @@ const badgeVariants = cva(
         available: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
         meeting: 'bg-rose-50 text-rose-700 border border-rose-200',
         scheduled: 'bg-amber-50 text-amber-800 border border-amber-200',
-        error: 'bg-slate-100 text-slate-600 border border-slate-300',
+        error: 'bg-slate-100 text-slate-600 border border-slate-500',
       },
     },
     defaultVariants: {

@@ -15,6 +15,7 @@ const buttonVariants = cva(
         ghost: 'hover:bg-slate-100 text-slate-700 hover:text-slate-900',
         link: 'text-blue-600 underline-offset-4 hover:underline p-0 h-auto',
         success: 'bg-emerald-600 text-white shadow-sm hover:bg-emerald-700',
+        warning: 'border border-amber-700 bg-amber-600 text-white shadow-sm hover:bg-amber-700 active:bg-amber-800',
       },
       size: {
         default: 'min-h-11 px-4 py-2 rounded-[14px]',

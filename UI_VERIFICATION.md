@@ -186,3 +186,17 @@ Screenshots: C:/Users/AHMAD SYAH/.codex/tmp/zoom-monitor-preview/kolaborasi-logi
 The supplied official PNG was confirmed RGBA with an alpha range of 0–255; the visible blue rectangle came from CSS, not the source image. Following the user's transparency request, the rectangle, padding, rounded corners, and login border were removed. The original PNG alpha channel now supplies a CSS mask, rendered navy on light sidebar/header surfaces and white on login. The component retains its accessible image name and source proportions. This is a CSS color treatment of the existing official PNG, not a newly sourced dark PNG variant or altered raster file.
 
 Login and the actual application layout rendered with isolated synthetic data were visually checked. Evidence: C:/Users/AHMAD SYAH/.codex/tmp/zoom-monitor-preview/kolaborasi-transparent-login.png and kolaborasi-transparent-sidebar.png. Build and lint passed; no real accounts or meetings were changed.
+
+## Semantic status colors and provincial service wording — 29 October 2026
+
+User direction: available/bookable accounts use green, scheduled meetings use yellow, and live meetings use red. The shared status palette now applies to dashboard summaries, badges, account activity panels, booking results/actions, and schedule tabs/icons. Connection status and history remain slate; successful actions use green, warnings use amber, and errors/destructive actions use red. Brand and navigation remain navy. Labels and icons accompany every status.
+
+Booking BUSY results use red when live_meeting is present and yellow for a schedule conflict otherwise. Conflict details also accept the provided live_meeting and scheduled_now fields. This changes presentation only; booking permissions, force confirmation, API calls, and manual-only availability search remain intact.
+
+Following visual feedback, the scheduled-conflict action uses solid muted amber #8F6C1A with white text, replacing the initial bright yellow option. Hover and pressed states darken the same hue. Pale yellow remains on the conflict panel. Status text contrast: available 6.64:1, scheduled 6.43:1, live 7.09:1, disconnected 6.26:1; status borders exceed 3:1 against their surfaces. White on green actions is 5.89:1; the amber action exceeds 4.5:1, including hover and pressed states.
+
+Login now reads: "Monitoring akun Zoom, booking jadwal meeting, dan pengelolaan rekaman untuk kebutuhan Pemerintah Provinsi Sumatera Utara." The requested operator-attribution sentence is removed. Page descriptions also identify the provincial government's meeting needs instead of implying meetings belong exclusively to Diskominfo. Institutional identity and copyright remain unchanged.
+
+Validation: production build and lint passed. All 18 existing offline tests passed; no new tests were added for cosmetic changes. Actual dashboard components were inspected on desktop and at 390 px. Actual booking components were rendered in an isolated SSR fixture with synthetic availability data and a network guard; only the fixture's initial searched state was enabled to expose results. No application search policy was changed and no real Zoom booking, edit, deletion, or account mutation was performed. The updated login wording was verified in the running development app.
+
+Evidence: C:/Users/AHMAD SYAH/.codex/tmp/zoom-monitor-preview/status-colors-desktop.png, status-colors-mobile.png, muted-amber-booking.png, and pemprov-login-description.png. These checks supersede earlier available-account blue and initial bright yellow action references.

@@ -18,5 +18,5 @@ export function StatusBadge({ status, className, showIcon = true }: StatusBadgeP
     scheduled: { label: 'Terjadwal', icon: 'nav_calendar' },
     error: { label: 'Tidak terhubung', icon: '' },
   }[kind] || { label: 'Tidak terhubung', icon: '' };
-  return <span className={cn(`status-${kind} inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold`, className)}>{showIcon && (details.icon ? <BrandIcon name={details.icon} className="!w-3.5 !h-3.5" /> : <AlertTriangle size={13} aria-hidden="true" />)}<span>{details.label}</span></span>;
+  return <span className={cn(`status-${kind} inline-flex shrink-0 items-center gap-1.5 border px-2.5 py-1 rounded-lg text-[11px] font-semibold`, className)}>{showIcon && (details.icon ? <BrandIcon name={details.icon} className="!w-3.5 !h-3.5" /> : <AlertTriangle size={13} aria-hidden="true" />)}<span>{details.label}</span></span>;
 }

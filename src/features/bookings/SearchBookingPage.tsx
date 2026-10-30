@@ -176,7 +176,7 @@ export const SearchBookingPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <PageBanner title="Booking virtual meeting" description="Pilih jadwal dan akun Zoom untuk rapat Diskominfo Provinsi Sumatera Utara." image="search_availability.webp" />
+      <PageBanner title="Booking virtual meeting" description="Pilih jadwal dan akun Zoom untuk kebutuhan meeting Pemerintah Provinsi Sumatera Utara." image="search_availability.webp" />
 
       {/* Search Parameters Card */}
       <Card className="border-slate-200 bg-white shadow-xs">
@@ -268,6 +268,8 @@ export const SearchBookingPage: React.FC = () => {
             {availability.map((item) => {
               const isAvail = item.status === 'AVAILABLE';
               const isBusy = item.status === 'BUSY';
+              const isLive = isBusy && !!item.live_meeting;
+              const conflict = item.conflicting_meeting || item.live_meeting || item.scheduled_now;
 
               return (
                 <Card
@@ -275,8 +277,10 @@ export const SearchBookingPage: React.FC = () => {
                   className={`border transition-all shadow-xs ${
                     isAvail
                       ? 'border-emerald-200 bg-white hover:border-emerald-300'
-                      : isBusy
+                      : isLive
                       ? 'border-rose-200 bg-white'
+                      : isBusy
+                      ? 'border-amber-200 bg-white'
                       : 'border-slate-200 bg-slate-50/50'
                   }`}
                 >
@@ -291,7 +295,7 @@ export const SearchBookingPage: React.FC = () => {
                             {item.email || item.user_name || 'Ruang Rapat'}
                           </p>
                         </div>
-                        <StatusBadge status={item.status} />
+                        <StatusBadge status={isBusy ? (isLive ? 'meeting' : 'scheduled') : item.status} />
                       </div>
 
                       <div className="mt-4 p-3 rounded-lg text-xs min-h-[50px] flex items-center">
@@ -301,17 +305,17 @@ export const SearchBookingPage: React.FC = () => {
                             <span className="font-medium">Ruang siap digunakan pada jam ini</span>
                           </div>
                         ) : isBusy ? (
-                          <div className="text-rose-700 bg-rose-50/80 p-2.5 rounded-md w-full border border-rose-200">
+                          <div className={`p-2.5 rounded-md w-full border ${isLive ? 'status-meeting' : 'status-scheduled'}`}>
                             <p className="font-semibold flex items-center gap-1.5">
                               <AlertOctagon className="w-3.5 h-3.5" />
-                              <span>Bentrok dengan meeting lain:</span>
+                              <span>{isLive ? 'Akun sedang live meeting:' : 'Bentrok dengan jadwal meeting:'}</span>
                             </p>
-                            <p className="mt-1 font-medium text-rose-900">
-                              "{item.conflicting_meeting?.topic || item.details}"
+                            <p className="mt-1 font-medium">
+                              "{conflict?.topic || item.details}"
                             </p>
-                            {item.conflicting_meeting && (
-                              <p className="text-[11px] text-rose-600 mt-0.5">
-                                Jam: {item.conflicting_meeting.start_time} - {item.conflicting_meeting.end_time} WIB
+                            {conflict && (
+                              <p className="text-[11px] mt-0.5">
+                                Jam: {conflict.start_time} - {conflict.end_time} WIB
                               </p>
                             )}
                           </div>
@@ -335,10 +339,10 @@ export const SearchBookingPage: React.FC = () => {
                         </Button>
                       ) : (
                         <Button
-                          variant="outline"
+                          variant={isLive ? 'destructive' : isBusy ? 'warning' : 'outline'}
                           disabled={isFetching || isError}
                           onClick={() => handleOpenBookModal(item)}
-                          className="w-full text-xs text-rose-700 hover:bg-rose-50 border-rose-200"
+                          className={`w-full text-xs font-semibold ${!isBusy ? 'text-slate-600 hover:bg-slate-100 border-slate-500' : ''}`}
                         >
                           <span>Tetap Booking (Force Booking)</span>
                         </Button>
@@ -431,7 +435,7 @@ export const SearchBookingPage: React.FC = () => {
               <input
                 type="checkbox"
                 {...registerBook('ignore_conflict')}
-                className="rounded border-amber-400 text-amber-600 focus:ring-amber-500 w-4 h-4 mt-0.5"
+                className="rounded border-amber-200 text-amber-600 focus:ring-amber-500 w-4 h-4 mt-0.5"
               />
               <span>
                 <strong className="text-amber-900 block">Abaikan Konflik Jadwal (Force)</strong>

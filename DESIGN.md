@@ -4,7 +4,8 @@ Design reference: the existing Flutter application at `C:/Project/FE Mobile-Zoom
 
 - Primary navy: `#173D72`; dark navy: `#10243F`; accent: `#087EAE`.
 - Background and raised surfaces: `#EAF0F7`; text: `#14273E`; secondary text: `#536579`; separators: `#D0DBEA`.
-- Status colors follow Flutter: blue for available accounts, muted rose for meetings, ochre for scheduled meetings, and slate for connection errors. Every status has a visible text label.
+- Status colors follow the user's semantic palette: green for available accounts and successful actions, yellow for scheduled meetings and conflicts, red for live meetings and destructive/error actions, and slate for disconnected accounts and history. Light status surfaces use dark text and contrasting borders. Every status has a visible text label and icon; navy remains the primary navigation and brand color. Booking results distinguish live meetings from scheduled conflicts using the API's live_meeting field.
+- Booking actions use solid green, muted amber, or red backgrounds according to availability, scheduled conflicts, or live meetings. Their labels are white. The amber action uses #8F6C1A, a darker companion to the pale yellow conflict panel, to preserve readable white text without a vivid yellow fill.
 - Inter is bundled locally, matching Flutter. Numeric summaries use tabular figures where useful. Monospace is reserved for identifiers and keys.
 - The official Pemerintah Provinsi Sumatera Utara emblem identifies the web application, following the user's institutional branding request. Full-color PNGs are sourced from the official Diskominfo website and displayed with object-fit: contain at their original 4:5 aspect ratio, without rounded clipping or recoloring. Navigation, status icons, and empty states continue to reuse Flutter's original SVG family.
 - Workplace photographs provide context on login and page banners. A navy scrim keeps white text readable. The banner is the focal point; controls and account status take priority below it.
@@ -21,5 +22,7 @@ Sidebar and top bar blend into the same #EAF0F7 canvas. Hard separator borders a
 
 
 Institutional wording uses Diskominfo Provinsi Sumatera Utara and rapat instansi instead of the former company workspace labels. The full organization name, Dinas Komunikasi dan Informatika Provinsi Sumatera Utara, appears on login and in copyright on login and every authenticated route. Copyright wraps on narrow screens, and the mobile footer reserves clearance for the bottom navigation. Route URLs, API identifiers, account data, and the blue color tokens are unchanged.
+
+Meeting services support the needs of Pemerintah Provinsi Sumatera Utara; Diskominfo is the managing OPD. Login and page descriptions identify the provincial government as the service beneficiary. The login description ends with "Pemerintah Provinsi Sumatera Utara." and does not append an operator attribution.
 
 The official transparent Kolaborasi Sumut Berkah PNG accompanies the provincial emblem on login, desktop sidebar, and mobile header. The PNG alpha channel supplies the shape through a CSS mask, rendered navy on light surfaces and white on login. No rectangular backing is used. A single shared component controls image proportions and alternative text. The mobile header uses the space formerly occupied by the duplicate route title; each page retains its main heading. On viewports below 850 px tall, the sidebar's optional note is hidden to reserve space for both logos and navigation. Overflow remains scrollable as a fallback.
