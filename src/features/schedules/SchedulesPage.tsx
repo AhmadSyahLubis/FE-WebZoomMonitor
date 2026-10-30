@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PageBanner } from '@/components/shared/PageBanner';
+import { BrandIcon } from '@/components/shared/BrandIcon';
 import { QueryError } from '@/components/shared/QueryError';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bookingsApi } from '@/features/bookings/bookings.api';
@@ -199,7 +200,7 @@ export const SchedulesPage: React.FC = () => {
     }
 
     return (
-      <div className="meeting-list">
+      <div className="meeting-list" data-meeting-state={type}>
         <div className="meeting-list-heading">
           <div><h2>{type === 'upcoming' ? 'Rapat mendatang' : type === 'live' ? 'Rapat berlangsung' : 'Riwayat rapat'}</h2>
             <p>{items.length} jadwal · Semua waktu dalam WIB</p></div>
@@ -212,7 +213,7 @@ export const SchedulesPage: React.FC = () => {
             {items.map((m) => (
               <tr key={meetingRowKey(m)}>
                 <td className="meeting-subject">
-                  <div className="meeting-symbol" aria-hidden="true"><Calendar size={21} /></div>
+                  <div className="meeting-symbol" aria-hidden="true">{type === 'live' ? <BrandIcon name="status_live" className="!w-[21px] !h-[21px]" /> : <Calendar size={21} />}</div>
                   <div className="meeting-subject-copy">
                     <span className="meeting-title">{m.topic}</span>
                     <div className="meeting-meta"><span>ID {m.meeting_id}</span><span className="meeting-kind">{isRecurringMeeting(m) && <Repeat size={12} aria-hidden="true" />}{isRecurringMeeting(m) ? 'Berulang' : 'Sekali'}</span></div>
@@ -304,7 +305,7 @@ export const SchedulesPage: React.FC = () => {
 
   return (
     <div className="schedule-page space-y-6">
-      <PageBanner title="Jadwal rapat" description="Pantau rapat yang berlangsung, agenda mendatang, dan riwayat rapat Diskominfo Sumut." image="schedule_room.webp" />
+      <PageBanner title="Jadwal rapat" description="Monitoring meeting yang berlangsung, agenda mendatang, dan riwayat rapat Pemerintah Provinsi Sumatera Utara." image="schedule_room.webp" />
       {schedules.upcoming_meetings?.some(isRecurringMeeting) && <p className="text-xs text-slate-500">Edit topik dan durasi untuk meeting berulang belum tersedia.</p>}
 
       <p className="min-h-10 sm:min-h-5 text-xs text-slate-500" role="status">
@@ -396,12 +397,12 @@ export const SchedulesPage: React.FC = () => {
       {/* Tabs */}
       <Tabs defaultValue="upcoming" className="schedule-tabs space-y-5">
         <TabsList className="schedule-tab-list">
-          <TabsTrigger value="live" className="text-xs font-semibold gap-2">
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+          <TabsTrigger value="live" className="schedule-tab-live text-xs font-semibold gap-2">
+            <BrandIcon name="status_live" className="!w-3.5 !h-3.5 text-rose-700" />
             <span>Berlangsung <b>{schedules.live_meetings?.length || 0}</b></span>
           </TabsTrigger>
-          <TabsTrigger value="upcoming" className="text-xs font-semibold gap-2">
-            <Clock className="w-3.5 h-3.5 text-blue-600" />
+          <TabsTrigger value="upcoming" className="schedule-tab-upcoming text-xs font-semibold gap-2">
+            <Clock className="w-3.5 h-3.5 text-amber-700" />
             <span>Mendatang <b>{schedules.upcoming_meetings?.length || 0}</b></span>
           </TabsTrigger>
           <TabsTrigger value="past" className="text-xs font-semibold gap-2">

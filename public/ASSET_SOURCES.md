@@ -4,7 +4,7 @@ Navigation symbols, photographs, and the font are reused from the existing Zoom 
 
 - `brand/zoom-monitor.svg`: original `tool/design_assets/zoom_monitor_mark.svg`, copied without changing its geometry.
 - `brand/zoom-monitor-favicon.svg`: favicon generated from that original mark with the installed `logo-design` skill's `export_variants.py`.
-- `icons/*.svg`: original `tool/design_assets/ui/*.svg`. These share the Flutter application's circular aperture motif. They remain stroke-based SVGs for UI use and render at their native 24 px grid.
+- `icons/*.svg`: original `tool/design_assets/ui/*.svg` plus `icons/status_live.svg` (broadcast aperture wave mark built on the same 24 px grid, `stroke-width="1.8"`, audited at 99/100 with `logo-design`'s `svg_audit.py`). These share the Flutter application's circular aperture motif. They remain stroke-based SVGs for UI use and render at their native 24 px grid.
 - `images/*.webp`: existing Flutter artwork from `assets/images`, converted to WebP for web delivery. Six images total 293,914 bytes, down from 10,347,376 bytes. See the Flutter project's `assets/images/ASSET_SOURCES.md` for the original image generation prompts and provenance.
 - `fonts/Inter-Variable.ttf` and `fonts/OFL-Inter.txt`: bundled Flutter font and its license.
 

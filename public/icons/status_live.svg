@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" color="#182640" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><title>status live</title>
+      <circle cx="12" cy="12" r="1.9" fill="currentColor" stroke="none"/>
+      <path d="M15.71 8.29a5.25 5.25 0 0 1 0 7.42M8.29 15.71a5.25 5.25 0 0 1 0-7.42"/>
+      <path d="M18.19 5.81a8.75 8.75 0 0 1 0 12.38M5.81 18.19a8.75 8.75 0 0 1 0-12.38"/>
+    </svg>
