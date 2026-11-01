@@ -12,7 +12,7 @@ test('expired refresh logs out through the route guard without requiring a docum
     setItem: (key, value) => values.set(key, String(value)),
     removeItem: key => values.delete(key),
   } });
-  const server = await createServer({ configFile: false, resolve: { alias: { '@': resolve('src') } }, server: { middlewareMode: true, hmr: false, ws: false, watch: null }, appType: 'custom' });
+  const server = await createServer({ configFile: false, cacheDir: 'node_modules/.vite-test-refresh', resolve: { alias: { '@': resolve('src') } }, server: { middlewareMode: true, hmr: false, ws: false, watch: null }, appType: 'custom' });
   const previousAdapter = axios.defaults.adapter;
   try {
     const { default: api } = await server.ssrLoadModule('/src/lib/api.ts');
