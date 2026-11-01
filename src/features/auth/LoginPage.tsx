@@ -50,7 +50,7 @@ export function LoginPage() {
         <section className="login-form-panel" aria-labelledby="login-title">
           <span className="text-xs font-medium text-blue-600">Dinas Komunikasi dan Informatika<br />Provinsi Sumatera Utara</span>
           <h2 id="login-title">Selamat datang kembali</h2>
-          <p>Masuk dengan akun instansi yang terdaftar. Sesi berakhir saat halaman dimuat ulang.</p>
+          <p>Masuk dengan akun instansi yang terdaftar. Sesi tetap aktif selama tab browser terbuka.</p>
           {apiError && <div role="alert" className="mt-5 flex gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700"><AlertCircle size={17} className="shrink-0" />{apiError}</div>}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
             <div><Label htmlFor="username" required>Username</Label><div className="relative"><Input id="username" {...register('username')} placeholder="Masukkan username" className="pl-11" error={errors.username?.message} aria-invalid={!!errors.username} aria-describedby={errors.username ? 'username-error' : undefined} autoComplete="username" /><User size={17} className="absolute left-4 top-4 text-slate-500 pointer-events-none" /></div></div>

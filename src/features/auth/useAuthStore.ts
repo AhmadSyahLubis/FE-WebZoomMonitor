@@ -20,17 +20,73 @@ interface AuthState {
 // Legacy sessions have no backend session binding and must not be restored.
 try { for (const key of ['access_token', 'refresh_token', 'user']) localStorage.removeItem(key); } catch { /* Storage can be unavailable in private browsing. */ }
 
+const SESSION_STORAGE_KEY = 'zm_web_session';
+
+interface PersistedSession {
+  user: UserResponse;
+  accessToken: string;
+  refreshToken: string;
+  deviceId: string;
+}
+
+function loadSession(expectedDeviceId: string): PersistedSession | null {
+  try {
+    const raw = globalThis.sessionStorage?.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<PersistedSession>;
+    if (
+      !parsed ||
+      typeof parsed.accessToken !== 'string' ||
+      !parsed.accessToken ||
+      typeof parsed.refreshToken !== 'string' ||
+      !parsed.refreshToken ||
+      parsed.deviceId !== expectedDeviceId ||
+      !parsed.user ||
+      !parsed.user.id
+    ) {
+      globalThis.sessionStorage?.removeItem(SESSION_STORAGE_KEY);
+      return null;
+    }
+    return parsed as PersistedSession;
+  } catch {
+    return null;
+  }
+}
+
+function saveSession(session: PersistedSession | null): void {
+  try {
+    if (!session) {
+      globalThis.sessionStorage?.removeItem(SESSION_STORAGE_KEY);
+      return;
+    }
+    globalThis.sessionStorage?.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+  } catch {
+    /* Storage can be unavailable in private browsing. */
+  }
+}
+
+const initialDeviceId = getWebDeviceId();
+const restoredSession = loadSession(initialDeviceId);
+
 export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  accessToken: null,
-  refreshToken: null,
-  deviceId: getWebDeviceId(),
-  isAuthenticated: false,
+  user: restoredSession?.user ?? null,
+  accessToken: restoredSession?.accessToken ?? null,
+  refreshToken: restoredSession?.refreshToken ?? null,
+  deviceId: initialDeviceId,
+  isAuthenticated: Boolean(restoredSession),
   version: 0,
 
   login: (data: TokenResponse) => {
     queryClient.clear();
     if (!data.access_token || !data.refresh_token || !data.user?.id) throw new Error('Respons login tidak valid');
+
+    const deviceId = get().deviceId;
+    saveSession({
+      user: data.user,
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      deviceId,
+    });
 
     set({
       user: data.user,
@@ -44,6 +100,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: () => {
     queryClient.clear();
     try { for (const key of ['access_token', 'refresh_token', 'user']) localStorage.removeItem(key); } catch { /* No persistent tokens are used. */ }
+    saveSession(null);
 
     set({
       user: null,
@@ -55,7 +112,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   updateTokens: (accessToken: string, refreshToken: string) => {
-    if (!get().isAuthenticated || !accessToken || !refreshToken) throw new Error('Sesi tidak aktif');
+    const state = get();
+    if (!state.isAuthenticated || !accessToken || !refreshToken || !state.user) throw new Error('Sesi tidak aktif');
+
+    saveSession({
+      user: state.user,
+      accessToken,
+      refreshToken,
+      deviceId: state.deviceId,
+    });
 
     set({
       accessToken,
@@ -65,6 +130,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   setUser: (user: UserResponse) => {
-    if (get().isAuthenticated) set({ user });
+    const state = get();
+    if (state.isAuthenticated && state.accessToken && state.refreshToken) {
+      saveSession({
+        user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        deviceId: state.deviceId,
+      });
+      set({ user });
+    }
   },
 }));
