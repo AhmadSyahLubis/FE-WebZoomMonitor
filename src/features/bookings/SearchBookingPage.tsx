@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PageBanner } from '@/components/shared/PageBanner';
 import { QueryError } from '@/components/shared/QueryError';
 import { BrandIcon } from '@/components/shared/BrandIcon';
@@ -37,6 +37,7 @@ import {
   AlertOctagon,
   ExternalLink,
   Repeat,
+  Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -103,6 +104,7 @@ export const SearchBookingPage: React.FC = () => {
     handleSubmit: handleBookSubmit,
     control: bookingControl,
     reset: resetBook,
+    setValue: setBookValue,
     formState: { errors: bookingErrors },
   } = useForm<z.input<typeof bookingSchema>, unknown, BookingFormData>({
     resolver: zodResolver(bookingSchema),
@@ -111,12 +113,94 @@ export const SearchBookingPage: React.FC = () => {
       is_recurring: false,
       recurrence_type: 1,
       repeat_interval: 1,
-      weekly_days: '2,3,4,5,6',
+      weekly_days: '',
+      end_date_time: '',
       ignore_conflict: false,
     },
   });
 
+  const [recurrencePattern, setRecurrencePattern] = useState<'daily' | 'workday' | 'weekly' | 'monthly'>('daily');
+
   const isRecurring = useWatch({ control: bookingControl, name: 'is_recurring' });
+  const weeklyDays = useWatch({ control: bookingControl, name: 'weekly_days' });
+  const endDateTime = useWatch({ control: bookingControl, name: 'end_date_time' });
+
+  const handlePatternChange = (pattern: 'daily' | 'workday' | 'weekly' | 'monthly') => {
+    setRecurrencePattern(pattern);
+    if (pattern === 'daily') {
+      setBookValue('recurrence_type', 1, { shouldValidate: true });
+      setBookValue('weekly_days', '', { shouldValidate: true });
+    } else if (pattern === 'workday') {
+      setBookValue('recurrence_type', 2, { shouldValidate: true });
+      setBookValue('weekly_days', '2,3,4,5,6', { shouldValidate: true });
+    } else if (pattern === 'weekly') {
+      setBookValue('recurrence_type', 2, { shouldValidate: true });
+      const jsDay = new Date(`${searchParams.date}T00:00:00`).getDay();
+      const zoomDay = jsDay === 0 ? '1' : String(jsDay + 1);
+      setBookValue('weekly_days', zoomDay, { shouldValidate: true });
+    } else if (pattern === 'monthly') {
+      setBookValue('recurrence_type', 3, { shouldValidate: true });
+      setBookValue('weekly_days', '', { shouldValidate: true });
+    }
+  };
+
+  const toggleWeeklyDay = (dayId: string) => {
+    const current = (weeklyDays || '').split(',').filter(Boolean);
+    const next = current.includes(dayId)
+      ? current.filter((d) => d !== dayId)
+      : [...current, dayId];
+    const sorted = ['2', '3', '4', '5', '6', '7', '1'].filter((d) => next.includes(d));
+    setBookValue('weekly_days', sorted.join(','), { shouldValidate: true });
+  };
+
+  const estimatedSessions = useMemo(() => {
+    if (!isRecurring || !endDateTime) return null;
+    const start = new Date(`${searchParams.date}T00:00:00`);
+    const end = new Date(`${endDateTime}T00:00:00`);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 0;
+
+    if (recurrencePattern === 'daily') {
+      const diff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      return diff + 1;
+    }
+
+    if (recurrencePattern === 'workday') {
+      let count = 0;
+      const cur = new Date(start);
+      while (cur <= end) {
+        const day = cur.getDay();
+        if (day >= 1 && day <= 5) count++;
+        cur.setDate(cur.getDate() + 1);
+      }
+      return count;
+    }
+
+    if (recurrencePattern === 'weekly') {
+      const selected = (weeklyDays || '').split(',').filter(Boolean);
+      if (selected.length === 0) return 0;
+      let count = 0;
+      const cur = new Date(start);
+      while (cur <= end) {
+        const jsDay = cur.getDay();
+        const zoomDay = jsDay === 0 ? '1' : String(jsDay + 1);
+        if (selected.includes(zoomDay)) count++;
+        cur.setDate(cur.getDate() + 1);
+      }
+      return count;
+    }
+
+    if (recurrencePattern === 'monthly') {
+      let count = 0;
+      const cur = new Date(start);
+      while (cur <= end) {
+        count++;
+        cur.setMonth(cur.getMonth() + 1);
+      }
+      return count;
+    }
+
+    return null;
+  }, [isRecurring, endDateTime, recurrencePattern, weeklyDays, searchParams.date]);
 
   // Book mutation
   const bookMutation = useMutation({
@@ -143,12 +227,14 @@ export const SearchBookingPage: React.FC = () => {
 
   const handleOpenBookModal = (room: AvailabilityResult) => {
     setSelectedRoom(room);
+    setRecurrencePattern('daily');
     resetBook({
       topic: '',
       is_recurring: false,
       recurrence_type: 1,
       repeat_interval: 1,
-      weekly_days: '2,3,4,5,6',
+      weekly_days: '',
+      end_date_time: '',
       ignore_conflict: false,
     });
   };
@@ -166,7 +252,7 @@ export const SearchBookingPage: React.FC = () => {
       is_recurring: formData.is_recurring,
       recurrence_type: formData.is_recurring ? formData.recurrence_type : undefined,
       repeat_interval: formData.is_recurring ? formData.repeat_interval : undefined,
-      weekly_days: formData.is_recurring ? formData.weekly_days : undefined,
+      weekly_days: formData.is_recurring && formData.recurrence_type === 2 ? (formData.weekly_days || undefined) : undefined,
       end_date_time: formData.is_recurring && formData.end_date_time ? recurringEndUTC(formData.end_date_time) : undefined,
       ignore_conflict: formData.ignore_conflict,
     };
@@ -395,37 +481,92 @@ export const SearchBookingPage: React.FC = () => {
               {isRecurring && (
                 <div className="space-y-3 pt-2 border-t border-slate-200 text-xs">
                   <div>
-                    <Label htmlFor="recurrence_type">Tipe Pengulangan</Label>
+                    <Label htmlFor="recurrence_pattern">Pola Pengulangan</Label>
                     <select
-                      {...registerBook('recurrence_type')}
-                      id="recurrence_type"
+                      id="recurrence_pattern"
+                      value={recurrencePattern}
+                      onChange={(e) => handlePatternChange(e.target.value as any)}
                       className="w-full h-9 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-900"
                     >
-                      <option value={1}>Harian (Daily)</option>
-                      <option value={2}>Mingguan (Weekly)</option>
-                      <option value={3}>Bulanan (Monthly)</option>
+                      <option value="daily">Setiap Hari (Senin – Minggu)</option>
+                      <option value="workday">Hari Kerja (Senin – Jumat)</option>
+                      <option value="weekly">Hari Tertentu dalam Seminggu</option>
+                      <option value="monthly">Bulanan</option>
                     </select>
                   </div>
 
-                  <div>
-                    <Label htmlFor="weekly_days">Hari Dalam Seminggu (Contoh: 2,3,4,5,6)</Label>
-                    <Input
-                      {...registerBook('weekly_days')}
-                      id="weekly_days"
-                      placeholder="2,3,4,5,6 (Senin-Jumat)"
-                      className="h-8 text-xs"
-                    />
-                  </div>
+                  {recurrencePattern === 'workday' && (
+                    <div className="p-2.5 rounded-md bg-blue-50/70 border border-blue-100 text-[11px] text-blue-800">
+                      Rapat otomatis dijadwalkan setiap <strong>Senin sampai Jumat</strong> hingga tanggal selesai.
+                    </div>
+                  )}
+
+                  {recurrencePattern === 'weekly' && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Pilih Hari Rapat</Label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { id: '2', label: 'Sen' },
+                          { id: '3', label: 'Sel' },
+                          { id: '4', label: 'Rab' },
+                          { id: '5', label: 'Kam' },
+                          { id: '6', label: 'Jum' },
+                          { id: '7', label: 'Sab' },
+                          { id: '1', label: 'Min' },
+                        ].map((day) => {
+                          const active = (weeklyDays || '').split(',').includes(day.id);
+                          return (
+                            <button
+                              key={day.id}
+                              type="button"
+                              onClick={() => toggleWeeklyDay(day.id)}
+                              className={`h-7 px-2.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                                active
+                                  ? 'bg-blue-600 text-white shadow-xs'
+                                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {day.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {bookingErrors.weekly_days && (
+                        <p className="text-[11px] text-rose-600 mt-1">{bookingErrors.weekly_days.message}</p>
+                      )}
+                    </div>
+                  )}
 
                   <div>
-                    <Label htmlFor="recurrence_end">Tanggal Selesai Berulang</Label>
+                    <Label htmlFor="recurrence_end" required>Tanggal Selesai Berulang</Label>
                     <Input
                       {...registerBook('end_date_time')}
                       id="recurrence_end"
+                      min={searchParams.date}
+                      error={bookingErrors.end_date_time?.message}
+                      aria-invalid={!!bookingErrors.end_date_time}
                       type="date"
                       className="h-8 text-xs"
                     />
                   </div>
+
+                  {estimatedSessions !== null && (
+                    <div className="p-2.5 rounded-lg bg-blue-50/70 border border-blue-200 text-xs text-blue-900 flex items-start gap-2">
+                      <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        {estimatedSessions === 0 ? (
+                          <span className="text-rose-600 font-medium">
+                            Tanggal selesai harus sama atau setelah tanggal mulai ({searchParams.date}).
+                          </span>
+                        ) : (
+                          <span>
+                            Estimasi: <strong>{estimatedSessions} sesi rapat</strong> akan dijadwalkan pukul{' '}
+                            <strong>{searchParams.start_time} WIB</strong>.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -77,3 +77,18 @@ test('booking rejects missing or whitespace topic and returns the displayable fi
     assert.equal(result.error.issues[0].message, 'Topik meeting wajib diisi');
   }
 });
+
+test('booking validates recurring requirements when enabled', () => {
+  const missingEnd = bookingSchema.safeParse({ topic: 'Valid topic', is_recurring: true, recurrence_type: 1, ignore_conflict: false });
+  assert.equal(missingEnd.success, false);
+  assert.deepEqual(missingEnd.error.issues[0].path, ['end_date_time']);
+  assert.equal(missingEnd.error.issues[0].message, 'Tanggal selesai berulang wajib diisi');
+
+  const missingWeekly = bookingSchema.safeParse({ topic: 'Valid topic', is_recurring: true, recurrence_type: 2, end_date_time: '2026-11-10', weekly_days: '', ignore_conflict: false });
+  assert.equal(missingWeekly.success, false);
+  assert.deepEqual(missingWeekly.error.issues[0].path, ['weekly_days']);
+  assert.equal(missingWeekly.error.issues[0].message, 'Pilih minimal 1 hari pengulangan');
+
+  const validDaily = bookingSchema.safeParse({ topic: 'Valid topic', is_recurring: true, recurrence_type: 1, end_date_time: '2026-11-10', ignore_conflict: false });
+  assert.equal(validDaily.success, true);
+});
