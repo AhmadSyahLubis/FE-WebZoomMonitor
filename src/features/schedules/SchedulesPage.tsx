@@ -152,6 +152,17 @@ export const SchedulesPage: React.FC = () => {
     },
   });
 
+  const resolveHostKey = (accountId: number, fallback?: string | null) =>
+    fallback || accounts.find((acc) => acc.id === accountId)?.host_key || '';
+  const detailHostKey = detailMeeting
+    ? resolveHostKey(
+        detailMeeting.accountId,
+        [...(schedules.live_meetings || []), ...(schedules.upcoming_meetings || []), ...(schedules.past_meetings || [])].find(
+          (item) => item.account_id === detailMeeting.accountId && item.meeting_id === detailMeeting.meetingId
+        )?.host_key
+      )
+    : '';
+
   const handleOpenEdit = (m: ScheduleItem) => {
     if (isRecurringMeeting(m)) {
       toast.error('Edit meeting berulang belum tersedia.');
@@ -497,11 +508,11 @@ export const SchedulesPage: React.FC = () => {
               <Skeleton className="h-5 w-1/2" />
             </div>
           ) : zoomDetail ? (
-            <div className="space-y-3.5 py-2 text-xs">
+            <div className="min-w-0 space-y-3.5 py-2 text-xs">
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                 <span className="text-slate-400 font-medium">Topik Agenda</span>
-                <p className="text-sm font-bold text-slate-900">{zoomDetail.topic}</p>
-                <div className="grid grid-cols-2 gap-2 pt-2 text-slate-600 border-t border-slate-200">
+                <p className="text-sm font-bold text-slate-900 break-words">{zoomDetail.topic}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-slate-600 border-t border-slate-200">
                   <p>ID: <span className="font-mono font-semibold text-slate-900">{zoomDetail.id}</span></p>
                   <p>Durasi: <span className="font-semibold text-slate-900">{zoomDetail.duration} menit</span></p>
                   <p>Waktu Mulai: <span className="font-semibold text-slate-900">{formatWIBDateTime(zoomDetail.start_time)}</span></p>
@@ -510,22 +521,32 @@ export const SchedulesPage: React.FC = () => {
               </div>
 
               {zoomDetail.join_url && (
-                <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-between">
+                <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-between gap-2 min-w-0">
                   <div className="min-w-0 pr-2">
                     <span className="font-semibold text-blue-900 block">Tautan Join</span>
-                    <span className="font-mono text-blue-700 truncate block">{zoomDetail.join_url}</span>
+                    <span className="font-mono text-blue-700 break-all line-clamp-2 block">{zoomDetail.join_url}</span>
                   </div>
-                  <CopyButton text={zoomDetail.join_url} label="Tautan disalin" />
+                  <CopyButton text={zoomDetail.join_url} label="Tautan disalin" className="shrink-0" />
                 </div>
               )}
 
               {zoomDetail.password && (
-                <div className="p-3 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-between">
+                <div className="p-3 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-between gap-2 min-w-0">
                   <div>
                     <span className="text-slate-500 block">Password Meeting</span>
                     <span className="font-mono font-bold text-slate-900">{zoomDetail.password}</span>
                   </div>
-                  <CopyButton text={zoomDetail.password} label="Password disalin" />
+                  <CopyButton text={zoomDetail.password} label="Password disalin" className="shrink-0" />
+                </div>
+              )}
+
+              {detailHostKey && (
+                <div className="p-3 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-between gap-2 min-w-0">
+                  <div>
+                    <span className="text-slate-500 block">Host Key Akun</span>
+                    <span className="font-mono font-bold text-slate-900">{detailHostKey}</span>
+                  </div>
+                  <CopyButton text={detailHostKey} label="Host key disalin" className="shrink-0" />
                 </div>
               )}
             </div>
