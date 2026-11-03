@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { MonitoringLabels } from '@/components/shared/MonitoringLabels';
+import { monitoringIsStale } from '@/features/dashboard/monitoring';
 import { PageBanner } from '@/components/shared/PageBanner';
 import { BrandIcon } from '@/components/shared/BrandIcon';
 import { QueryError } from '@/components/shared/QueryError';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bookingsApi } from '@/features/bookings/bookings.api';
+import { MeetingInvitationButton } from '@/features/invitations/MeetingInvitationButton';
+import { invitationFromSchedule } from '@/features/invitations/invitationData';
 import { buildMeetingDelete, buildMeetingEdit, isRecurringMeeting, meetingRowKey } from '@/features/bookings/meetingSafety';
 import { accountsApi } from '@/features/accounts/accounts.api';
 import { queryKeys } from '@/lib/queryClient';
@@ -43,6 +47,8 @@ import { formatWIBDateTime, formatWIBTime } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export const SchedulesPage: React.FC = () => {
+  const [clock, setClock] = useState(() => Date.now());
+  useEffect(() => { const timer = window.setInterval(() => setClock(Date.now()), 10_000); return () => window.clearInterval(timer); }, []);
   const queryClient = useQueryClient();
 
   // Filters state
@@ -91,7 +97,7 @@ export const SchedulesPage: React.FC = () => {
   } = useQuery({
     queryKey: queryKeys.schedules(appliedFilter),
     queryFn: ({ signal }) => bookingsApi.listSchedules(appliedFilter, signal),
-    refetchInterval: 60_000,
+    refetchInterval: 30_000,
   });
 
   // Fetch meeting detail from Zoom when detail modal opens
@@ -218,7 +224,7 @@ export const SchedulesPage: React.FC = () => {
           <span className="meeting-zone"><Clock size={14} aria-hidden="true" /> WIB</span>
         </div>
         <table className="meeting-table">
-          <caption className="sr-only">Daftar meeting {type === 'upcoming' ? 'mendatang' : type === 'live' ? 'berlangsung' : 'selesai'}, waktu dalam WIB</caption>
+          <caption className="sr-only">Daftar meeting {type === 'upcoming' ? 'mendatang' : type === 'live' ? 'terpantau live' : 'dengan jadwal terlewati'}, waktu dalam WIB</caption>
           <thead><tr><th scope="col">Meeting</th><th scope="col">Jadwal · WIB</th><th scope="col">Akun & host</th><th scope="col" className="meeting-action-heading">Kelola</th></tr></thead>
           <tbody>
             {items.map((m) => (
@@ -227,18 +233,20 @@ export const SchedulesPage: React.FC = () => {
                   <div className="meeting-symbol" aria-hidden="true">{type === 'live' ? <BrandIcon name="status_live" className="!w-[21px] !h-[21px]" /> : <Calendar size={21} />}</div>
                   <div className="meeting-subject-copy">
                     <span className="meeting-title">{m.topic}</span>
+                    <MonitoringLabels monitoring={m.monitoring} stale={isError || monitoringIsStale(schedules.observed_at, schedules.server_time, dataUpdatedAt, clock)} />
                     <div className="meeting-meta"><span>ID {m.meeting_id}</span><span className="meeting-kind">{isRecurringMeeting(m) && <Repeat size={12} aria-hidden="true" />}{isRecurringMeeting(m) ? 'Berulang' : 'Sekali'}</span></div>
                   </div>
                 </td>
                 <td data-label="Jadwal" className="meeting-time">
-                  <strong>{formatWIBDateTime(m.start_time)}</strong>
-                  <span>Sampai {formatWIBTime(m.end_time)} · {m.duration} menit</span>
+                  <strong>{m.start_time ? formatWIBDateTime(m.start_time) : 'Jadwal belum diketahui'}</strong>
+                  {m.end_time && <span>Sampai {formatWIBTime(m.end_time)} · {m.duration} menit</span>}
                 </td>
                 <td data-label="Akun" className="meeting-account">
                   <strong>{m.account_name}</strong><span>{m.host || 'Host belum tersedia'}</span>
                 </td>
                 <td className="meeting-actions-cell">
                   <div className="meeting-actions">
+                    <MeetingInvitationButton loadInvitation={async () => invitationFromSchedule(m, await bookingsApi.getMeetingDetail(m.account_id, m.meeting_id))} />
                     {/* Details action */}
                     <Button
                       variant="ghost"
@@ -320,7 +328,7 @@ export const SchedulesPage: React.FC = () => {
       {schedules.upcoming_meetings?.some(isRecurringMeeting) && <p className="text-xs text-slate-500">Edit topik dan durasi untuk meeting berulang belum tersedia.</p>}
 
       <p className="min-h-10 sm:min-h-5 text-xs text-slate-500" role="status">
-        {isError && dataUpdatedAt > 0 ? 'Pembaruan gagal. Jadwal terakhir tetap ditampilkan.' : isFetching && !isLoading ? 'Memperbarui jadwal…' : 'Diperbarui otomatis setiap 60 detik saat halaman aktif.'}
+        {isError && dataUpdatedAt > 0 ? 'Pembaruan gagal. Jadwal terakhir tetap ditampilkan.' : isFetching && !isLoading ? 'Memperbarui jadwal…' : 'Diperbarui otomatis setiap 30 detik saat halaman aktif. Riwayat menunjukkan jadwal terlewati, bukan konfirmasi rapat selesai.'}
       </p>
       {isError && !dataUpdatedAt && <QueryError onRetry={() => refetch()} />}
       {/* Filter Bar Card */}

@@ -7,6 +7,8 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { bookingsApi } from './bookings.api';
+import { MeetingInvitationButton } from '@/features/invitations/MeetingInvitationButton';
+import { invitationFromBooking } from '@/features/invitations/invitationData';
 import { bookingSchema } from './bookingSchema';
 import { recurringEndUTC, todayWIB } from './meetingSafety';
 import { queryKeys } from '@/lib/queryClient';
@@ -20,6 +22,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StatusBadge } from '@/components/shared/StatusBadge';
+import { ReservedScheduleNotice } from './ReservedScheduleNotice';
+import { needsReservationConfirmation, reservationOverrideAllowed } from './reservationSafety';
+import { MonitoringLabels } from '@/components/shared/MonitoringLabels';
 import { CopyButton } from '@/components/shared/CopyButton';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -74,6 +79,7 @@ export const SearchBookingPage: React.FC = () => {
 
   // Booking modal state
   const [selectedRoom, setSelectedRoom] = useState<AvailabilityResult | null>(null);
+  const [reservationConfirmed, setReservationConfirmed] = useState(false);
   const [successBooking, setSuccessBooking] = useState<BookingCreatedResponse | null>(null);
 
   // Search form
@@ -122,6 +128,7 @@ export const SearchBookingPage: React.FC = () => {
   const [recurrencePattern, setRecurrencePattern] = useState<'daily' | 'workday' | 'weekly' | 'monthly'>('daily');
 
   const isRecurring = useWatch({ control: bookingControl, name: 'is_recurring' });
+  const forceBooking = useWatch({ control: bookingControl, name: 'ignore_conflict' });
   const weeklyDays = useWatch({ control: bookingControl, name: 'weekly_days' });
   const endDateTime = useWatch({ control: bookingControl, name: 'end_date_time' });
 
@@ -214,6 +221,10 @@ export const SearchBookingPage: React.FC = () => {
       setSuccessBooking(data);
     },
     onError: (err: any) => {
+      if (err.response?.data?.error_code === 'RESERVATION_CONFIRMATION_REQUIRED') {
+        setSelectedRoom(room => room ? { ...room, requires_reservation_confirmation: true } : room);
+        setReservationConfirmed(false);
+      }
       const msg = err.response?.data?.message || 'Gagal mem-booking meeting';
       toast.error(msg);
     },
@@ -226,6 +237,7 @@ export const SearchBookingPage: React.FC = () => {
   };
 
   const handleOpenBookModal = (room: AvailabilityResult) => {
+    setReservationConfirmed(false);
     setSelectedRoom(room);
     setRecurrencePattern('daily');
     resetBook({
@@ -241,6 +253,10 @@ export const SearchBookingPage: React.FC = () => {
 
   const onConfirmBooking = (formData: BookingFormData) => {
     if (!selectedRoom) return;
+    if (!reservationOverrideAllowed(selectedRoom, formData.ignore_conflict, reservationConfirmed)) {
+      toast.error('Konfirmasikan lebih dahulu bahwa rapat sebelumnya tidak akan dilanjutkan.');
+      return;
+    }
 
     const payload: BookMeetingRequest = {
       account_id: selectedRoom.account.id,
@@ -255,6 +271,7 @@ export const SearchBookingPage: React.FC = () => {
       weekly_days: formData.is_recurring && formData.recurrence_type === 2 ? (formData.weekly_days || undefined) : undefined,
       end_date_time: formData.is_recurring && formData.end_date_time ? recurringEndUTC(formData.end_date_time) : undefined,
       ignore_conflict: formData.ignore_conflict,
+      confirm_reserved_schedule: formData.ignore_conflict && reservationConfirmed,
     };
 
     bookMutation.mutate(payload);
@@ -388,7 +405,7 @@ export const SearchBookingPage: React.FC = () => {
                         {isAvail ? (
                           <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50/80 p-2.5 rounded-md w-full border border-emerald-200">
                             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                            <span className="font-medium">Ruang siap digunakan pada jam ini</span>
+                            <span className="font-medium">{item.details}</span>
                           </div>
                         ) : isBusy ? (
                           <div className={`p-2.5 rounded-md w-full border ${isLive ? 'status-meeting' : 'status-scheduled'}`}>
@@ -399,7 +416,7 @@ export const SearchBookingPage: React.FC = () => {
                             <p className="mt-1 font-medium">
                               "{conflict?.topic || item.details}"
                             </p>
-                            {conflict && (
+                            {conflict?.start_time && conflict.end_time && (
                               <p className="text-[11px] mt-0.5">
                                 Jam: {conflict.start_time} - {conflict.end_time} WIB
                               </p>
@@ -411,6 +428,9 @@ export const SearchBookingPage: React.FC = () => {
                           </div>
                         )}
                       </div>
+                      {(item.live_meeting?.monitoring || conflict?.monitoring) && <p className="mt-2 text-xs text-slate-500">Kondisi pada pemeriksaan terakhir:</p>}
+                      <MonitoringLabels monitoring={conflict?.monitoring || item.live_meeting?.monitoring} />
+                      {needsReservationConfirmation(item) && <ReservedScheduleNotice />}
                     </div>
 
                     <div className="mt-5 pt-3 border-t border-slate-100">
@@ -430,7 +450,7 @@ export const SearchBookingPage: React.FC = () => {
                           onClick={() => handleOpenBookModal(item)}
                           className={`w-full text-xs font-semibold ${!isBusy ? 'text-slate-600 hover:bg-slate-100 border-slate-500' : ''}`}
                         >
-                          <span>Tetap Booking (Force Booking)</span>
+                          <span>{needsReservationConfirmation(item) ? 'Tinjau reservasi sebelum booking' : 'Tetap Booking (Force Booking)'}</span>
                         </Button>
                       )}
                     </div>
@@ -572,6 +592,7 @@ export const SearchBookingPage: React.FC = () => {
             </div>
 
             {/* Ignore conflict option */}
+            {needsReservationConfirmation(selectedRoom) && <ReservedScheduleNotice checked={reservationConfirmed} onChange={setReservationConfirmed} />}
             <label className="flex items-start gap-2 cursor-pointer text-xs text-slate-600 p-2.5 rounded-lg bg-amber-50/60 border border-amber-200">
               <input
                 type="checkbox"
@@ -592,7 +613,7 @@ export const SearchBookingPage: React.FC = () => {
               >
                 Batal
               </Button>
-              <Button type="submit" isLoading={bookMutation.isPending} className="bg-blue-600 hover:bg-blue-700">
+              <Button type="submit" disabled={!reservationOverrideAllowed(selectedRoom, forceBooking, reservationConfirmed)} isLoading={bookMutation.isPending} className="bg-blue-600 hover:bg-blue-700">
                 Konfirmasi Booking
               </Button>
             </DialogFooter>
@@ -665,7 +686,11 @@ export const SearchBookingPage: React.FC = () => {
             </div>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="flex-wrap gap-2">
+            {successBooking && bookMutation.variables && <MeetingInvitationButton loadInvitation={async () => {
+              const request = bookMutation.variables!;
+              return invitationFromBooking(successBooking.id, request, await bookingsApi.getMeetingDetail(request.account_id, successBooking.id));
+            }} />}
             <Button
               type="button"
               variant="outline"

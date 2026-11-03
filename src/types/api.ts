@@ -52,7 +52,19 @@ export interface TokenResponse {
 // ═══════════════════════════════════════
 export type AccountStatus = 'available' | 'meeting' | 'scheduled' | 'error';
 
+export interface MeetingMonitoring {
+  last_started_at?: string;
+  last_ended_at?: string;
+  state: 'live' | 'scheduled' | 'elapsed' | 'unknown';
+  schedule_known: boolean;
+  observed_at: string;
+  labels: { code: string; text: string }[];
+}
+
 export interface DashboardAccountSummary {
+  monitoring?: MeetingMonitoring;
+  server_time?: string;
+  live_count?: number;
   id: number;
   account_name: string;
   email?: string | null;
@@ -65,6 +77,10 @@ export interface DashboardAccountSummary {
 }
 
 export interface AccountStatusResponse {
+  server_time?: string;
+  monitoring?: MeetingMonitoring;
+  observed_at?: string;
+  meetings?: ScheduleItem[];
   account_id: number;
   status: AccountStatus;
   topic?: string | null;
@@ -124,6 +140,7 @@ export interface CheckConnectionResponse {
 // BOOKING & MEETING DTOs
 // ═══════════════════════════════════════
 export interface MeetingSummary {
+  monitoring?: MeetingMonitoring;
   topic: string;
   start_time: string;  // "HH:MM"
   end_time: string;    // "HH:MM"
@@ -135,6 +152,9 @@ export interface AccountRef {
 }
 
 export interface AvailabilityResult {
+  requires_reservation_confirmation?: boolean;
+  observed_at?: string;
+  server_time?: string;
   id: string;
   account: AccountRef;
   user_name: string;
@@ -148,6 +168,7 @@ export interface AvailabilityResult {
 }
 
 export interface BookMeetingRequest {
+  confirm_reserved_schedule?: boolean;
   account_id: number;
   booking_user_id: string;
   topic: string;
@@ -197,6 +218,9 @@ export interface EndMeetingRequest {
 }
 
 export interface ScheduleItem {
+  monitoring?: MeetingMonitoring;
+  uuid?: string;
+  host_id?: string;
   id: number;
   meeting_id: number;
   account_id: number;
@@ -214,6 +238,8 @@ export interface ScheduleItem {
 }
 
 export interface SchedulesResponse {
+  observed_at?: string;
+  server_time?: string;
   live_meetings: ScheduleItem[];
   upcoming_meetings: ScheduleItem[];
   past_meetings: ScheduleItem[];

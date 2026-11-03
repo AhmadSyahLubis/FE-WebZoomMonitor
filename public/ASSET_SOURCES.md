@@ -7,6 +7,7 @@ Navigation symbols, photographs, and the font are reused from the existing Zoom 
 - `icons/*.svg`: original `tool/design_assets/ui/*.svg` plus `icons/status_live.svg` (broadcast aperture wave mark built on the same 24 px grid, `stroke-width="1.8"`, audited at 99/100 with `logo-design`'s `svg_audit.py`). These share the Flutter application's circular aperture motif. They remain stroke-based SVGs for UI use and render at their native 24 px grid.
 - `images/*.webp`: existing Flutter artwork from `assets/images`, converted to WebP for web delivery. Six images total 293,914 bytes, down from 10,347,376 bytes. See the Flutter project's `assets/images/ASSET_SOURCES.md` for the original image generation prompts and provenance.
 - `fonts/Inter-Variable.ttf` and `fonts/OFL-Inter.txt`: bundled Flutter font and its license.
+- `fonts/InterInvitation-Regular.ttf` and `fonts/InterInvitation-Bold.ttf`: static instances of that same Inter font, generated locally with fontTools at weight 400/700 and optical size 14 for embedding selectable text in invitation PDFs. Covered by `fonts/OFL-Inter.txt`.
 
 The installed `logo-design` skill audited the source logo and navigation symbol at 99/100 each, with an informational note about retaining SVG strokes. No replacement logo was generated. A separately installed skill named `asset generator` or `icon generator` was not found in the available skill folders or plugin search during this session.
 
@@ -23,3 +24,4 @@ At the user's request, the active web identity uses the official provincial embl
 
 - `brand/kolaborasi-sumut-berkah.png`: https://disdik.sumutprov.go.id/web/img/kolaborasi-sumut-berkah.png — original 496 × 108 RGBA PNG, downloaded on 29 October 2026 from the official Dinas Pendidikan Provinsi Sumatera Utara site (https://disdik.sumutprov.go.id/site/).
 - The source PNG has genuine alpha transparency (RGBA, alpha range 0–255). It is used as a CSS alpha mask: navy on light surfaces and white on the login photograph, without a rectangular backing. The PNG file and its shape are unchanged; rendering color is supplied by CSS. It accompanies the provincial emblem on login, the desktop sidebar, and the mobile header. The province's favicon remains the provincial emblem for small-size readability.
+- Meeting invitation PDFs and their web preview reuse this original white transparent PNG directly on the navy header, at its original 496:108 aspect ratio. The invitation background pattern is drawn as vector outlines, so it adds no downloaded image asset and leaves the QR quiet zone clear.
